@@ -1,11 +1,10 @@
 package me.cutehammond.pill.global.oauth.handler;
 
 import lombok.RequiredArgsConstructor;
-import me.cutehammond.pill.domain.user.domain.UserRefreshToken;
-import me.cutehammond.pill.domain.user.domain.dao.UserRefreshTokenRepository;
+import me.cutehammond.pill.domain.user.application.AuthService;
 import me.cutehammond.pill.global.config.properties.AppProperties;
-import me.cutehammond.pill.global.oauth.domain.Provider;
-import me.cutehammond.pill.global.oauth.domain.Role;
+import me.cutehammond.pill.global.oauth.entity.Provider;
+import me.cutehammond.pill.global.oauth.entity.Role;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfo;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfoFactory;
 import me.cutehammond.pill.global.oauth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
@@ -15,7 +14,7 @@ import me.cutehammond.pill.global.utils.CookieUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -38,8 +37,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final AuthTokenProvider tokenProvider;
     private final AppProperties appProperties;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
     private final OAuth2AuthorizationRequestBasedOnCookieRepository authorizationRequestRepository;
+
+    private final AuthService authService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -58,6 +58,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         Optional<String> redirectUri = CookieUtil.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
                 .map(Cookie::getValue);
 
+        // redirect uri is not permitted
         if(redirectUri.isPresent() && !isAuthorizedRedirectUri(redirectUri.get())) {
             throw new IllegalArgumentException("Sorry! We've got an Unauthorized Redirect URI and can't proceed with the authentication");
         }
@@ -67,40 +68,19 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2AuthenticationToken authToken = (OAuth2AuthenticationToken) authentication;
         Provider provider = Provider.valueOf(authToken.getAuthorizedClientRegistrationId().toUpperCase());
 
-        OidcUser user = (OidcUser) authentication.getPrincipal();
+        OAuth2User user = (OAuth2User) authentication.getPrincipal();
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(provider, user.getAttributes());
-        var authorities = ((OidcUser) authentication.getPrincipal()).getAuthorities();
+        var authorities = ((OAuth2User) authentication.getPrincipal()).getAuthorities();
 
         Role role = hasAuthority(authorities, Role.ADMIN.getKey()) ? Role.ADMIN : Role.DEFAULT_USER;
 
         Date now = new Date();
         AuthToken accessToken = tokenProvider.createAuthToken(
-                userInfo.getId(),
-                role,
-                new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
+                userInfo.getId(), role, new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
         );
 
         // refresh 토큰 설정
-        long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
-
-        AuthToken refreshToken = tokenProvider.createAuthToken(
-                appProperties.getAuth().getTokenSecret(),
-                new Date(now.getTime() + refreshTokenExpiry)
-        );
-
-        // DB 저장
-        UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByUserId(userInfo.getId());
-        if (userRefreshToken != null) {
-            userRefreshToken.setRefreshToken(refreshToken.getToken());
-        } else {
-            userRefreshToken = new UserRefreshToken(userInfo.getId(), refreshToken.getToken());
-            userRefreshTokenRepository.saveAndFlush(userRefreshToken);
-        }
-
-        int cookieMaxAge = (int) refreshTokenExpiry / 60;
-
-        CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
-        CookieUtil.addCookie(response, REFRESH_TOKEN, refreshToken.getToken(), cookieMaxAge);
+        authService.updateRefreshToken(userInfo.getId(), now, request, response);
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", accessToken.getToken())
@@ -109,7 +89,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
         super.clearAuthenticationAttributes(request);
-
         authorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
     }
 

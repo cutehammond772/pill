@@ -17,18 +17,22 @@ import java.io.IOException;
 
 @Slf4j
 @RequiredArgsConstructor
-public class TokenAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final AuthTokenProvider tokenProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        // jwt secret key 를 이용해 header 내의 jwt 를 AuthToken 으로 변환
         String tokenStr = HeaderUtil.getAccessToken(request);
         AuthToken token = tokenProvider.convertAuthToken(tokenStr);
 
+        // token 이 유효한지 확인 (위의 secret key 를 이용해 암호화한 token 인지 확인)
         if (token.validate()) {
             Authentication authentication = tokenProvider.getAuthentication(token);
+
+            // authentication 등록 (= 인증)
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

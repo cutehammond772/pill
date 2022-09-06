@@ -1,14 +1,13 @@
 package me.cutehammond.pill.domain.user.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sun.istack.NotNull;
-import com.sun.istack.Nullable;
 import lombok.*;
 import me.cutehammond.pill.global.common.BaseTimeEntity;
-import me.cutehammond.pill.global.oauth.domain.Provider;
-import me.cutehammond.pill.global.oauth.domain.Role;
+import me.cutehammond.pill.global.oauth.entity.Provider;
+import me.cutehammond.pill.global.oauth.entity.Role;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 @Getter
@@ -33,14 +32,9 @@ public class User extends BaseTimeEntity {
     private String userName;
 
     @NotNull
-    @Column(name = "password", length = 128)
-    private String password;
-
-    @NotNull
     @Column(name = "email", length = 128, unique = true)
     private String email;
 
-    @Nullable
     @Setter
     @Column(name = "profile_url", length = 512)
     private String profileUrl;
@@ -59,11 +53,12 @@ public class User extends BaseTimeEntity {
     public User(String userId, String userName, String email, String profileUrl, Provider provider, Role role) {
         this.userId = userId;
         this.userName = userName;
-        this.password = "NO_PASSWORD";
-        this.email = Optional.of(email).orElse("NO_EMAIL");
-        this.profileUrl = Optional.of(profileUrl).orElse("");
+        this.email = Optional.ofNullable(email).orElse("NO_EMAIL");
+        this.profileUrl = profileUrl;
         this.provider = provider;
         this.role = role;
     }
+
+
 
 }

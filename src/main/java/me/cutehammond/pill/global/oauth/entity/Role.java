@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.oauth.domain;
+package me.cutehammond.pill.global.oauth.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -3,7 +3,7 @@ package me.cutehammond.pill.global.oauth.token;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import me.cutehammond.pill.global.oauth.domain.Role;
+import me.cutehammond.pill.global.oauth.entity.Role;
 import me.cutehammond.pill.global.oauth.exception.TokenValidFailedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

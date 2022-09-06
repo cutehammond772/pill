@@ -9,7 +9,7 @@ public final class HeaderUtil {
     private static final String TOKEN_PREFIX = "Bearer ";
 
     public static String getAccessToken(HttpServletRequest request) {
-        var header = Optional.of(request.getHeader(HEADER_AUTHORIZATION));
+        var header = Optional.ofNullable(request.getHeader(HEADER_AUTHORIZATION));
 
         return header
                 .filter(s -> s.startsWith(TOKEN_PREFIX))

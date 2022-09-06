@@ -1,6 +1,6 @@
 package me.cutehammond.pill.global.oauth.info;
 
-import me.cutehammond.pill.global.oauth.domain.Provider;
+import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.info.impl.GoogleOAuth2UserInfo;
 
 import java.util.Map;
