@@ -37,7 +37,7 @@ public class PillElement extends BaseTimeEntity {
     @Builder
     public PillElement(PillElementType pillElementType, String content) {
         if (pillElementType == PillElementType.ROOT)
-            throw new IllegalArgumentException("You cannot modify element type to ROOT except PillElement.createRootElement method.");
+            throw new IllegalArgumentException("You cannot modify its element type to ROOT except 'PillElement.createRootElement()' method.");
 
         this.pillElementType = pillElementType;
         this.content = content;
@@ -67,7 +67,7 @@ public class PillElement extends BaseTimeEntity {
 
     public final void edit(PillElementRequest request) {
         if (request.getPillElementType() == PillElementType.ROOT)
-            throw new IllegalArgumentException("You cannot modify element type to ROOT except PillElement.createRootElement method.");
+            throw new IllegalArgumentException("You cannot modify its element type to ROOT except 'PillElement.createRootElement()' method.");
 
         this.pillElementType = request.getPillElementType();
         this.content = request.getContent();

@@ -3,7 +3,7 @@ package me.cutehammond.pill.domain.user.application;
 import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.domain.user.domain.AuthReqModel;
 import me.cutehammond.pill.domain.user.domain.UserRefreshToken;
-import me.cutehammond.pill.domain.user.domain.dao.UserRefreshTokenRepository;
+import me.cutehammond.pill.domain.user.domain.dao.sql.UserRefreshTokenRepository;
 import me.cutehammond.pill.global.config.properties.AppProperties;
 import me.cutehammond.pill.global.oauth.entity.UserPrincipal;
 import me.cutehammond.pill.global.oauth.token.AuthToken;

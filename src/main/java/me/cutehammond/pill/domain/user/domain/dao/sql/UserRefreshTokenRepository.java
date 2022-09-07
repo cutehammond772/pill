@@ -1,4 +1,4 @@
-package me.cutehammond.pill.domain.user.domain.dao;
+package me.cutehammond.pill.domain.user.domain.dao.sql;
 
 import me.cutehammond.pill.domain.user.domain.UserRefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;

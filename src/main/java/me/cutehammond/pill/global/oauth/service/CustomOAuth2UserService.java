@@ -2,7 +2,7 @@ package me.cutehammond.pill.global.oauth.service;
 
 import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.domain.user.domain.User;
-import me.cutehammond.pill.domain.user.domain.dao.UserRepository;
+import me.cutehammond.pill.domain.user.domain.dao.sql.UserRepository;
 import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.entity.Role;
 import me.cutehammond.pill.global.oauth.entity.UserPrincipal;

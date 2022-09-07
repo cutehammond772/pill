@@ -16,7 +16,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableConfigurationProperties({
 		AppProperties.class, CorsProperties.class
 })
-@EnableJpaAuditing @EnableJpaRepositories(basePackages = "me.cutehammond.pill.domain.pill.domain.dao.sql")
+@EnableJpaAuditing @EnableJpaRepositories(basePackages = { "me.cutehammond.pill.domain.pill.domain.dao.sql", "me.cutehammond.pill.domain.user.domain.dao.sql" })
 @EnableMongoAuditing @EnableMongoRepositories(basePackages = "me.cutehammond.pill.domain.pill.domain.dao.nosql")
 public class PillApplication {
 

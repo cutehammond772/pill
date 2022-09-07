@@ -30,7 +30,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ApiResponse<?> login(HttpServletRequest request, HttpServletResponse response, @RequestBody AuthReqModel authReqModel) {
+    public ApiResponse<String> login(HttpServletRequest request, HttpServletResponse response, @RequestBody AuthReqModel authReqModel) {
         Date now = new Date();
 
         // Login (= Authenticate)
@@ -43,7 +43,7 @@ public class AuthController {
     }
 
     @GetMapping("/refresh")
-    public ApiResponse<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResponse<String> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         // access token 확인
         AuthToken authToken = tokenProvider.convertAuthToken(HeaderUtil.getAccessToken(request));
         if (!authToken.validate())
