@@ -19,7 +19,7 @@ public class OAuth2AuthorizationRequestBasedOnCookieRepository implements Author
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
         return CookieUtil.getCookie(request, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)
                 .map(cookie -> CookieUtil.deserialize(cookie, OAuth2AuthorizationRequest.class))
-                .get();
+                .orElse(null);
     }
 
     @Override

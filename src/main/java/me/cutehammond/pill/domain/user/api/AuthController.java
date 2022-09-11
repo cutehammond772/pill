@@ -60,7 +60,7 @@ public class AuthController {
 
         // refresh token
         String refreshToken = CookieUtil.getCookie(request, REFRESH_TOKEN)
-                .map(Cookie::getValue).get();
+                .map(Cookie::getValue).orElse(null);
 
         AuthToken authRefreshToken = tokenProvider.convertAuthToken(refreshToken);
 

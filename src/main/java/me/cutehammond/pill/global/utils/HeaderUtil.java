@@ -14,7 +14,7 @@ public final class HeaderUtil {
         return header
                 .filter(s -> s.startsWith(TOKEN_PREFIX))
                 .map(s -> s.substring(TOKEN_PREFIX.length()))
-                .get();
+                .orElse(null);
     }
 
 }

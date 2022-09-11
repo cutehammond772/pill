@@ -100,12 +100,11 @@ public class SecurityConfig {
 
         // formLogin 을 사용하지 않는 대신 JWT 검증을 통해 인증하므로 필터를 추가한다.
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
     /*
-     * auth 매니저 설정
+     * AuthenticationManager 설정
      * */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
@@ -114,7 +113,7 @@ public class SecurityConfig {
     }
 
     /*
-     * security 설정 시, 사용할 인코더 설정
+     * 비밀번호를 암호화할 인코더 설정
      * */
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {

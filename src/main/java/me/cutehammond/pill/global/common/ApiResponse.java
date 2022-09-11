@@ -3,7 +3,6 @@ package me.cutehammond.pill.global.common;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Getter
