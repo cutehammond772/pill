@@ -1,0 +1,124 @@
+/* Font */
+
+@import url('https://rsms.me/inter/inter.css');
+
+html { font-family: 'Inter', sans-serif; }
+
+@supports (font-variation-settings: normal) {
+    html { font-family: 'Inter var', sans-serif; }
+}
+
+/* Basic CSS */
+
+:root {
+    --bgcolor: #202020;
+    --primary: #0d6efd;
+    --spacer-1: .25rem;
+    --spacer-2: .5rem;
+    --spacer-3: .75rem;
+    --spacer-4: 1rem;
+
+    --mobile: 768px;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+    overflow: hidden;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+}
+
+/* index */
+
+.p-index-banner {
+    position: relative;
+    top: 10rem;
+}
+
+.p-index-banner > h1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: white;
+}
+
+.p-index-banner > a {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: white;
+
+    margin-top: 5rem;
+    padding-left: 5rem;
+    padding-right: 5rem;
+}
+
+/* pill CSS */
+
+.p-container {
+    max-width: 75%; /* margin */
+    height: 100%; /* multipage */
+    min-height: 768px;
+
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    background: var(--bgcolor);
+}
+
+.p-header {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+
+    display: flex;
+    justify-content: space-between;
+    flex-flow: row;
+    align-items: center;
+
+    padding-top: var(--spacer-4);
+    padding-bottom: var(--spacer-4);
+}
+
+.p-header svg text {
+    /* Profile */
+    font-weight: 500;
+    font-size: 24px;
+}
+
+.p-header * {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: white;
+}
+
+.p-footer {
+    position: absolute;
+    bottom: 0;
+    z-index: 1;
+    width: 100%;
+    padding-top: var(--spacer-2);
+    padding-bottom: var(--spacer-2);
+
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    color: white;
+}
+
+.p-profile {
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+.p-profile:focus {
+    outline: none;
+}

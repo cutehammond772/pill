@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+</head>
+<body>
+<!-- Page 1 -->
+<th:block th:fragment="page-1">
+  <div class="pm-name">Home</div>
+
+  <main sec:authorize="isAnonymous()">
+    <div class="p-index-banner">
+      <h1>You can take Pill with no side effects,</h1>
+      <h1>and get a useful knowledge.</h1>
+      <a th:href="@{/oauth2/authorization/google}" class="btn btn-outline-info btn-lg">Sign in / Login with Google</a>
+    </div>
+  </main>
+
+  <main sec:authorize="isAuthenticated()">
+    <div class="p-index-banner">
+      <a th:href="@{/board}" class="btn btn-outline-info btn-lg">Go to Board</a>
+    </div>
+  </main>
+</th:block>
+
+<!-- Page 2 -->
+<th:block th:fragment="page-2">
+  <div class="pm-name">Pill</div>
+
+  <main>
+    <div class="p-index-banner">
+      <h1>Your Favorite Pills</h1>
+
+      <div class="d-flex justify-content-center gap-4">
+        <div class="bg-primary rounded-4 shadow-lg" style="width: 20rem; height: 15rem;">a</div>
+        <div class="bg-primary rounded-4 shadow-lg" style="width: 20rem; height: 15rem;">a</div>
+        <div class="bg-primary rounded-4 shadow-lg" style="width: 20rem; height: 15rem;">a</div>
+        <div class="bg-primary rounded-4 shadow-lg" style="width: 20rem; height: 15rem;">a</div>
+      </div>
+
+    </div>
+  </main>
+</th:block>
+
+<!-- Page 3 -->
+<th:block th:fragment="page-3">
+  <div class="pm-name">About</div>
+
+  <main>
+    <div class="p-index-banner">
+      <h1>Developer</h1>
+      <h2>Jungheon Lee</h2>
+    </div>
+  </main>
+</th:block>
+
+</body>
+</html>

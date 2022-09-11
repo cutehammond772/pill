@@ -1,0 +1,25 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Common Head -->
+    <th:block th:replace="fragments/common :: head"></th:block>
+
+    <!-- Title -->
+    <title>Pill</title>
+</head>
+<body class="p-container">
+<!-- header -->
+<div th:replace="fragments/common :: header"></div>
+
+<!-- Multipage -->
+<th:block th:replace="fragments/common :: multipage ('index', 'page', 3)"></th:block>
+
+<!-- footer -->
+<div th:replace="fragments/common :: footer"></div>
+</body>
+<!-- Bootstrap Scripts -->
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+</script>
+</html>

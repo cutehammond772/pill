@@ -1,0 +1,93 @@
+.pm-page {
+    position: relative;
+    max-width: 100%;
+
+    height: 100%; /* would be modified dynamically by pill-multipage.js */
+    min-height: var(--mobile); /* would be modified dynamically by pill-multipage.js */
+}
+
+.pm-page * {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: white;
+}
+
+.pm-page:focus {
+    outline: none;
+}
+
+/* Desktop Category */
+.pm-category {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    flex-wrap: wrap;
+    flex-flow: row;
+    gap: var(--spacer-2);
+
+    position: sticky;
+    top: 2.5rem;
+    z-index: 2;
+}
+
+/* Mobile Category */
+@media screen and (max-width: 768px) {
+    .pm-category {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        gap: var(--spacer-2);
+        flex-wrap: wrap;
+        flex-flow: row;
+
+        position: sticky;
+        top: 5rem;
+        z-index: 2;
+    }
+}
+
+.pm-category > .unselected {
+    width: 6rem;
+
+    --bs-btn-font-weight: 600;
+    --bs-btn-color: white;
+    --bs-btn-bg: none;
+    --bs-btn-border-color: none;
+
+    --bs-btn-hover-color: white;
+    --bs-btn-hover-bg: var(--primary);
+    --bs-btn-hover-border-color: var(--primary);
+
+    --bs-btn-focus-shadow-rgb: var(--primary);
+
+    --bs-btn-active-color: white;
+    --bs-btn-active-bg: var(--primary);
+    --bs-btn-active-border-color: var(--primary);
+}
+
+.pm-category > .selected {
+    --bs-btn-font-weight: 600;
+
+    --bs-btn-color: white;
+    --bs-btn-bg: var(--primary);
+    --bs-btn-border-color: var(--primary);
+
+    --bs-btn-hover-color: white;
+    --bs-btn-hover-bg: var(--primary);
+    --bs-btn-hover-border-color: var(--primary);
+
+    --bs-btn-focus-shadow-rgb: var(--primary);
+
+    --bs-btn-active-color: white;
+    --bs-btn-active-bg: var(--primary);
+    --bs-btn-active-border-color: var(--primary);
+
+    width: 6rem;
+    pointer-events: none;
+}
+
+.pm-name {
+    display: none;
+}
