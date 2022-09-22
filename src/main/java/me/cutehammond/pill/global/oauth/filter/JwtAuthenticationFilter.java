@@ -4,9 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.cutehammond.pill.global.oauth.token.AuthToken;
 import me.cutehammond.pill.global.oauth.token.AuthTokenProvider;
+import me.cutehammond.pill.global.oauth.token.JwtAuthentication;
 import me.cutehammond.pill.global.utils.HeaderUtil;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -19,23 +23,52 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final AntPathRequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");
+
     private final AuthTokenProvider tokenProvider;
+    private final HttpSecurity httpSecurity;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        // jwt secret key 를 이용해 header 내의 jwt 를 AuthToken 으로 변환
-        String tokenStr = HeaderUtil.getAccessToken(request);
-        AuthToken token = tokenProvider.convertAuthToken(tokenStr);
-
-        // token 이 유효한지 확인 (위의 secret key 를 이용해 암호화한 token 인지 확인)
-        if (token.validate()) {
-            Authentication authentication = tokenProvider.getAuthentication(token);
-
-            // authentication 등록 (= 인증)
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        // auth request 의 경우 해당 필터를 넘기도록 한다.
+        // ex. OAuth2 Login 과정 (-> 모두 /auth/..로 통일)
+        // ex. 프론트 단으로부터 accessToken 을 가져오는 요청 (/auth/access)
+        if (AUTH_REQUEST_MATCHER.matches(request)) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
+        // Authentication 이 존재하지 않을 경우 등록한다.
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Header 내의 AccessToken 을 가져온다.
+            String token = HeaderUtil.getAccessToken(request);
+
+            if (token != null) {
+                try {
+                    // accessToken 이 존재하는 경우
+                    AuthToken authToken = tokenProvider.convertAuthToken(token);
+
+                    // token 이 유효한지 확인 (만료 여부, 위조 여부 등)
+                    if (authToken.validate()) {
+                        AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
+                        Authentication authentication = authenticationManager.authenticate(JwtAuthentication.prepared(authToken));
+
+                        // authentication 등록 (= 인증)
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // 어떤 오류라도 발생 시 인증 과정을 무효로 한다.
+                    SecurityContextHolder.clearContext();
+                }
+            } else {
+                // accessToken 이 존재하지 않는 경우
+                SecurityContextHolder.clearContext();
+            }
+        }
+
+        // 다음 필터로 이동
         filterChain.doFilter(request, response);
     }
 

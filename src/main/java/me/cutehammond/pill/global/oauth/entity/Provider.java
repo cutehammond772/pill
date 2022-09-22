@@ -1,8 +1,13 @@
 package me.cutehammond.pill.global.oauth.entity;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
+@RequiredArgsConstructor
 public enum Provider {
-    GOOGLE;
+    GOOGLE("sub");
+
+    private final String registrationId;
+
 }

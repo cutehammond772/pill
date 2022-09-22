@@ -1,89 +1,65 @@
 package me.cutehammond.pill.domain.user.api;
 
-import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
-import me.cutehammond.pill.domain.user.application.AuthService;
-import me.cutehammond.pill.domain.user.domain.AuthReqModel;
 import me.cutehammond.pill.global.common.ApiResponse;
-import me.cutehammond.pill.global.config.properties.AppProperties;
-import me.cutehammond.pill.global.oauth.entity.Role;
+import me.cutehammond.pill.global.common.ApiResponseType;
 import me.cutehammond.pill.global.oauth.token.AuthToken;
 import me.cutehammond.pill.global.oauth.token.AuthTokenProvider;
-import me.cutehammond.pill.global.utils.CookieUtil;
+import me.cutehammond.pill.global.utils.cookie.CookieUtil;
 import me.cutehammond.pill.global.utils.HeaderUtil;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
 
-import static me.cutehammond.pill.domain.user.application.AuthService.*;
+import static me.cutehammond.pill.global.oauth.token.AuthTokenProvider.REFRESH_TOKEN;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AppProperties appProperties;
     private final AuthTokenProvider tokenProvider;
-    private final AuthService authService;
 
-    @PostMapping("/login")
-    public ApiResponse<String> login(HttpServletRequest request, HttpServletResponse response, @RequestBody AuthReqModel authReqModel) {
-        Date now = new Date();
+    /** 유효한 refreshToken 을 이용하여 access token 을 요청한다. 이때 다른 요청과는 다르게 authorization header 가 포함되지 않는다. */
+    @GetMapping("/access")
+    public ResponseEntity<String> getAccessToken(HttpServletRequest request, HttpServletResponse response) {
+        // refreshToken 의 존재 여부를 확인한다.
+        var tokenOptional = CookieUtil.getCookie(request, REFRESH_TOKEN);
 
-        // Login (= Authenticate)
-        AuthToken accessToken = authService.authenticate(authReqModel, now);
+        // 만약 존재하지 않을 경우 404 를 반환한다. (프론트 단에서 이를 받으면 로그인 창으로 유도한다.)
+        if (tokenOptional.isEmpty())
+            return ApiResponse.getResponse(ApiResponseType.NO_REFRESH_TOKEN);
 
-        // Updating Refresh Token
-        authService.updateRefreshToken(authReqModel.getId(), now, request, response);
+        AuthToken refreshToken = tokenProvider.convertAuthToken(tokenOptional.map(Cookie::getValue).orElse(null));
 
-        return ApiResponse.success("token", accessToken.getToken());
+        // refreshToken 의 유효 여부를 따진다.
+        if (!refreshToken.validate()) {
+            // 유효하지 않은 token 은 삭제한다.
+            CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
+
+            return ApiResponse.getResponse(ApiResponseType.INVALID_ACCESS_TOKEN);
+        }
+
+        AuthToken accessToken = tokenProvider.issueAccessToken(refreshToken);
+        return ApiResponse.success(accessToken.getToken());
     }
 
+    /** 유효한 accessToken 을 이용하여 기존의 refreshToken 을 재발급합니다. <br>
+     * 임의로 refreshToken 유효 기한을 연장할 때 요청됩니다. */
     @GetMapping("/refresh")
-    public ApiResponse<String> refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        // access token 확인
+    public ResponseEntity refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        // header 로부터 accessToken 가져오기
         AuthToken authToken = tokenProvider.convertAuthToken(HeaderUtil.getAccessToken(request));
+
         if (!authToken.validate())
-            return ApiResponse.invalidAccessToken();
+            return ApiResponse.getResponse(ApiResponseType.INVALID_ACCESS_TOKEN);
 
-        // expired access token 인지 확인
-        Claims claims = authToken.getExpiredTokenClaims();
-        if (claims == null) {
-            return ApiResponse.notExpiredTokenYet();
-        }
+        tokenProvider.issueRefreshToken(request, response);
 
-        String userId = claims.getSubject();
-        Role role = Role.of(claims.get("role", String.class).toUpperCase());
-
-        // refresh token
-        String refreshToken = CookieUtil.getCookie(request, REFRESH_TOKEN)
-                .map(Cookie::getValue).orElse(null);
-
-        AuthToken authRefreshToken = tokenProvider.convertAuthToken(refreshToken);
-
-        if (!authRefreshToken.validate())
-            return ApiResponse.invalidRefreshToken();
-
-        // userId refresh token 으로 DB 확인
-        if (!authService.refreshTokenExists(userId)) {
-            return ApiResponse.invalidRefreshToken();
-        }
-
-        Date now = new Date();
-        AuthToken accessToken = tokenProvider.createAuthToken(
-                userId, role, new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
-        );
-
-        long validTime = authRefreshToken.getTokenClaims().getExpiration().getTime() - now.getTime();
-
-        // refresh 토큰 기간이 3일 이하로 남은 경우, refresh 토큰 갱신
-        if (validTime <= THREE_DAYS_MSEC)
-            authService.updateRefreshToken(userId, now, request, response);
-
-        return ApiResponse.success("token", accessToken.getToken());
+        return ResponseEntity.ok().build();
     }
 }
 

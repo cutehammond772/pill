@@ -1,6 +1,8 @@
 package me.cutehammond.pill.global.oauth.exception;
 
-public class TokenValidFailedException extends RuntimeException {
+import org.springframework.security.core.AuthenticationException;
+
+public class TokenValidFailedException extends AuthenticationException {
 
     public TokenValidFailedException() {
         super("Failed to generate token.");

@@ -2,6 +2,7 @@ package me.cutehammond.pill.global.oauth.token;
 
 import io.jsonwebtoken.*;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.cutehammond.pill.global.oauth.entity.Role;
@@ -14,35 +15,46 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class AuthToken {
 
+    /*
+    Registered Claims:  iss(= Token issuer; Pill),
+                        sub(= Token Name -> 'AccessToken' / 'RefreshToken'),
+                        aud(= Audience; UserId),
+                        exp(= Expiration),
+                        iat(= Issued at)
+     */
+
+    public enum AuthTokenType {
+        ACCESS_TOKEN, REFRESH_TOKEN;
+    }
+
+    public static final String AUTH_TOKEN_ISSUER = "Pill";
+
+    @NonNull
     private final String token;
+
+    @NonNull
     private final Key key;
 
-    private static final String AUTHORITIES_KEY = "role";
-
-    AuthToken(String id, Date expiry, Key key) {
+    AuthToken(String userId, Date expiry, Key key, AuthTokenType type) {
         this.key = key;
-        this.token = createAuthToken(id, expiry);
+        this.token = createAuthToken(userId, expiry, type);
     }
 
-    AuthToken(String id, Role role, Date expiry, Key key) {
-        this.key = key;
-        this.token = createAuthToken(id, role, expiry);
-    }
-
-    private String createAuthToken(String id, Date expiry) {
+    private String createAuthToken(String userId, Date expiry, AuthTokenType tokenType) {
         return Jwts.builder()
-                .setSubject(id)
-                .signWith(key, SignatureAlgorithm.HS256)
+                // iss - Token Issuer
+                .setIssuer(AUTH_TOKEN_ISSUER)
+                // sub - Token Name
+                .setSubject(tokenType.name())
+                // aud - Audience (= UserId)
+                .setAudience(userId)
+                // exp - Expiration
                 .setExpiration(expiry)
-                .compact();
-    }
+                // iat - issued at
+                .setIssuedAt(new Date())
 
-    private String createAuthToken(String id, Role role, Date expiry) {
-        return Jwts.builder()
-                .setSubject(id)
-                .claim(AUTHORITIES_KEY, role.getKey())
+                // Hashing Algorithm
                 .signWith(key, SignatureAlgorithm.HS256)
-                .setExpiration(expiry)
                 .compact();
     }
 
@@ -67,21 +79,6 @@ public class AuthToken {
             log.info("Unsupported JWT token.");
         } catch (IllegalArgumentException e) {
             log.info("JWT token is invalid.");
-        }
-
-        return null;
-    }
-
-    public Claims getExpiredTokenClaims() {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (ExpiredJwtException e) {
-            log.info("Expired JWT token.");
-            return e.getClaims();
         }
 
         return null;

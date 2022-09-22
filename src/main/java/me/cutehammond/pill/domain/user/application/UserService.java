@@ -3,6 +3,7 @@ package me.cutehammond.pill.domain.user.application;
 import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.domain.user.domain.User;
 import me.cutehammond.pill.domain.user.domain.dao.sql.UserRepository;
+import me.cutehammond.pill.global.oauth.token.JwtAuthentication;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,15 +24,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Optional<User> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        JwtAuthentication authentication = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null)
             return Optional.empty();
 
-        org.springframework.security.core.userdetails.User springUser =
-                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-
-        return Optional.ofNullable(getUser(springUser.getUsername()));
+        return Optional.ofNullable(getUser(authentication.getPrincipal()));
     }
 
 }

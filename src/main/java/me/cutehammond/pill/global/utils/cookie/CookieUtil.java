@@ -1,5 +1,6 @@
-package me.cutehammond.pill.global.utils;
+package me.cutehammond.pill.global.utils.cookie;
 
+import org.springframework.http.ResponseCookie;
 import org.springframework.util.SerializationUtils;
 
 import javax.servlet.http.Cookie;
@@ -17,13 +18,17 @@ public final class CookieUtil {
         return cookies.filter(c -> c.getName().equals(name)).findFirst();
     }
 
-    public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(maxAge);
+    public static void addCookie(HttpServletResponse response, CookieRequest request) {
+        ResponseCookie cookie = ResponseCookie.from(request.getName(), request.getValue())
+                .domain("localhost")
+                .sameSite(request.getSecureType().getSameSiteValue())
+                .path("/")
+                .httpOnly(request.getSecureType().isHttpOnly())
+                .maxAge(request.getMaxAge())
+                //.secure(true)
+                .build();
 
-        response.addCookie(cookie);
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     public static void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
