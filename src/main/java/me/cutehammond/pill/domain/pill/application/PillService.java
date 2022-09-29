@@ -28,7 +28,7 @@ public class PillService {
     private final PillRepository pillRepository;
     private final PillElementRepository elementRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public PillElementResponse getPillElement(@NonNull ObjectId elementId) {
@@ -66,9 +66,7 @@ public class PillService {
             throw new NoSuchElementException("A pill does not exist: " + id);
 
         Pill pill = optionalPill.get();
-        PillResponse response = new PillResponse(pill.getPillSequence(), pill.getTitle(), pill.getRootElement(), pill.getUser().getUserId());
-
-        return response;
+        return PillResponse.getResponse(pill);
     }
 
     @Transactional
@@ -102,7 +100,7 @@ public class PillService {
     }
 
     @Transactional
-    public long createPill(PillCreateRequest pillCreateRequest, PillElementRequest pillElementRequest) {
+    public long createPill(@NonNull PillCreateRequest pillCreateRequest, @NonNull PillElementRequest pillElementRequest) {
         if (pillElementRequest.getPillElementType() != PillElementType.ROOT)
             throw new IllegalArgumentException("An element type of root element must be 'ROOT'.");
 
@@ -113,7 +111,7 @@ public class PillService {
                 .map(this::saveElementsRecursively)
                 .forEach(rootElement::addSiblingBack);
 
-        User user = userService.getUser(pillCreateRequest.getUserId());
+        User user = userRepository.findByUserId(pillCreateRequest.getUserId());
 
         Pill pill = Pill.builder()
                 .title(pillCreateRequest.getTitle())
@@ -125,7 +123,7 @@ public class PillService {
     }
 
     @Transactional
-    public long deletePill(PillDeleteRequest request) {
+    public long deletePill(@NonNull PillDeleteRequest request) {
         Optional<Pill> optionalPill = pillRepository.findById(request.getId());
 
         if (optionalPill.isEmpty())

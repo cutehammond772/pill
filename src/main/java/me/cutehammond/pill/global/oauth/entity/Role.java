@@ -15,7 +15,7 @@ public enum Role {
     private final String key;
     private final String name;
 
-    public static final Role of(String key) {
+    public static final Role from(String key) {
         return Stream.of(Role.values())
                 .filter(role -> key.equals(role.getKey()))
                 .findFirst()

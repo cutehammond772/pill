@@ -1,7 +1,5 @@
 package me.cutehammond.pill;
 
-import me.cutehammond.pill.domain.pill.domain.dao.nosql.PillElementRepository;
-import me.cutehammond.pill.domain.pill.domain.dao.sql.PillRepository;
 import me.cutehammond.pill.global.config.properties.AppProperties;
 import me.cutehammond.pill.global.config.properties.CorsProperties;
 import org.springframework.boot.SpringApplication;
