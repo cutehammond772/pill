@@ -10,9 +10,11 @@ import me.cutehammond.pill.global.oauth.entity.Role;
 import java.security.Key;
 import java.util.Date;
 
+/**
+ * 인증 토큰 정보를 담은 객체입니다. 생성자 호출 시에 Validation 이 진행됩니다.
+ * */
 @Slf4j
 @Getter
-@RequiredArgsConstructor
 public class AuthToken {
 
     /*
@@ -35,12 +37,22 @@ public class AuthToken {
     @NonNull
     private final Key key;
 
-    AuthToken(String userId, Date expiry, Key key, AuthTokenType type) {
+    @NonNull
+    private final Claims claims;
+
+    AuthToken(@NonNull String token, @NonNull Key key) {
         this.key = key;
-        this.token = createAuthToken(userId, expiry, type);
+        this.token = token;
+        this.claims = extract();
     }
 
-    private String createAuthToken(String userId, Date expiry, AuthTokenType tokenType) {
+    AuthToken(@NonNull String userId, @NonNull Date expiry, @NonNull Key key, @NonNull AuthTokenType type) {
+        this.key = key;
+        this.token = create(userId, expiry, type);
+        this.claims = extract();
+    }
+
+    private String create(String userId, Date expiry, AuthTokenType tokenType) {
         return Jwts.builder()
                 // iss - Token Issuer
                 .setIssuer(AUTH_TOKEN_ISSUER)
@@ -58,11 +70,7 @@ public class AuthToken {
                 .compact();
     }
 
-    public boolean validate() {
-        return this.getTokenClaims() != null;
-    }
-
-    public Claims getTokenClaims() {
+    private Claims extract() {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(key)

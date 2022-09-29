@@ -1,13 +1,15 @@
 package me.cutehammond.pill.global.oauth.token;
 
 import io.jsonwebtoken.security.Keys;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import me.cutehammond.pill.global.config.properties.AppProperties;
-import me.cutehammond.pill.global.oauth.exception.AuthenticationNotFoundException;
 import me.cutehammond.pill.global.utils.cookie.CookieRequest;
 import me.cutehammond.pill.global.utils.cookie.CookieSecureType;
 import me.cutehammond.pill.global.utils.cookie.CookieUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,65 +17,67 @@ import java.security.Key;
 import java.util.Date;
 
 @Slf4j
+@Component
 public class AuthTokenProvider {
 
     private final Key key;
     private final AppProperties properties;
     public static final String REFRESH_TOKEN = "refresh_token";
 
-    public AuthTokenProvider(String secret, AppProperties properties) {
+    protected AuthTokenProvider(
+            @Value("${jwt.secret}") String secret, AppProperties properties) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.properties = properties;
     }
 
-    public AuthToken createAccessToken(String userId, Date expiry) {
+    /**
+     * AccessToken 특성의 AuthToken 을 생성합니다.
+     * */
+    public AuthToken createAccessToken(@NonNull String userId, @NonNull Date expiry) {
         return new AuthToken(userId, expiry, key, AuthToken.AuthTokenType.ACCESS_TOKEN);
     }
 
-    public AuthToken createRefreshToken(String userId, Date expiry) {
+    /**
+     * RefreshToken 특성의 AuthToken 을 생성합니다.
+     * */
+    public AuthToken createRefreshToken(@NonNull String userId, @NonNull Date expiry) {
         return new AuthToken(userId, expiry, key, AuthToken.AuthTokenType.REFRESH_TOKEN);
     }
 
-    public AuthToken convertAuthToken(String token) {
+    /**
+     * Token 문자열을 AuthToken 으로 변환합니다.
+     * */
+    public AuthToken convertAuthToken(@NonNull String token) {
         return new AuthToken(token, key);
     }
 
-    /** 프론트 단에 저장된 refreshToken 을 이용하여 새로운 accessToken 을 발급합니다.*/
-    public AuthToken issueAccessToken(AuthToken refreshToken) {
-        // 현재 백엔드 단에서 인증이 완료된 상태일 때, accessToken 을 생성할 수 있다.
-        JwtAuthentication authentication = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null)
-            throw new AuthenticationNotFoundException();
-
-        // refreshToken 의 유효 여부를 따진다.
-        if (!refreshToken.validate())
-            throw new IllegalArgumentException("Refresh token is invalid.");
-
+    /** 프론트 단에 저장된 RefreshToken 을 이용하여 새로운 AccessToken 을 발급합니다. <br>
+     * AuthToken 이 RefreshToken 이 아니면 IllegalArgumentException 예외를 던집니다.
+     * @throws IllegalArgumentException */
+    public AuthToken issueAccessToken(@NonNull AuthToken refreshToken) throws IllegalArgumentException {
         // 이 토큰이 RefreshToken 인지 따진다.
-        if (!AuthToken.AuthTokenType.REFRESH_TOKEN.name().equals(refreshToken.getTokenClaims().getSubject()))
+        if (!AuthToken.AuthTokenType.REFRESH_TOKEN.name().equals(refreshToken.getClaims().getSubject()))
             throw new IllegalArgumentException("This token is not refresh token.");
 
         // userId 의 유효 여부는 JwtAuthenticationProvider 에서 이미 검증하였으므로 여기서는 검증 로직이 불필요하다.
-        String userId = authentication.getPrincipal();
+        String userId = refreshToken.getClaims().getAudience();
         long refreshTokenExpiry = properties.getAuth().getRefreshTokenExpiry();
         Date now = new Date();
 
         AuthToken accessToken = createAccessToken(userId, new Date(now.getTime() + refreshTokenExpiry));
-
         return accessToken;
     }
 
-    /** auth 과정 이후 로그인을 유지하기 위해 refreshToken 을 발급한 후 등록합니다. <br>
-     * 만약 기존에 refreshToken 이 존재할 경우 삭제 후 새로 추가합니다. */
-    public void issueRefreshToken(HttpServletRequest req, HttpServletResponse res) {
-        // 현재 백엔드 단에서 인증이 완료된 상태일 때, accessToken 을 생성할 수 있다.
-        JwtAuthentication authentication = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
+    /** auth 과정 이후 로그인을 유지하기 위해 RefreshToken 을 발급한 후 등록합니다.
+     * 만약 기존에 RefreshToken 이 존재할 경우 삭제 후 새로 등록합니다. <br>
+     * AuthToken 이 AccessToken 이 아니면 IllegalArgumentException 예외를 던집니다.
+     * @throws IllegalArgumentException */
+    public void updateRefreshToken(HttpServletRequest req, HttpServletResponse res, @NonNull AuthToken accessToken) {
+        // 이 토큰이 RefreshToken 인지 따진다.
+        if (!AuthToken.AuthTokenType.ACCESS_TOKEN.name().equals(accessToken.getClaims().getSubject()))
+            throw new IllegalArgumentException("This token is not access token.");
 
-        if (authentication == null)
-            throw new AuthenticationNotFoundException();
-
-        String userId = authentication.getPrincipal();
+        String userId = accessToken.getClaims().getAudience();
         long refreshTokenExpiry = properties.getAuth().getRefreshTokenExpiry();
         Date now = new Date();
 

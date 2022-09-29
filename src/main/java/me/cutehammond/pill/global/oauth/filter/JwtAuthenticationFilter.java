@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -31,9 +32,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        // auth request 의 경우 해당 필터를 넘기도록 한다.
-        // ex. OAuth2 Login 과정 (-> 모두 /auth/..로 통일)
-        // ex. 프론트 단으로부터 accessToken 을 가져오는 요청 (/auth/access)
+        /* auth request 의 경우 해당 필터를 넘기도록 한다.
+         * ex. OAuth2 Login 과정 (-> 모두 /auth/..로 통일)
+         * ex. 프론트 단으로부터 accessToken 을 가져오는 요청 (/auth/access)
+         *
+         * ps. Session Policy 가 STATELESS 이므로 매 요청마다 이 필터를 거치지 않으면 Authentication 은 null 임에 명심해야 한다.
+         * 즉 /auth/.. 경로로 요청을 보내면 Authentication 은 항상 null 로 설정된다.
+         */
         if (AUTH_REQUEST_MATCHER.matches(request)) {
             filterChain.doFilter(request, response);
             return;
@@ -46,24 +51,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (token != null) {
                 try {
-                    // accessToken 이 존재하는 경우
+                    // accessToken 이 존재하면 이를 AuthToken 으로 변환한다.
                     AuthToken authToken = tokenProvider.convertAuthToken(token);
+                    AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
+                    Authentication authentication = authenticationManager.authenticate(JwtAuthentication.prepared(authToken));
 
-                    // token 이 유효한지 확인 (만료 여부, 위조 여부 등)
-                    if (authToken.validate()) {
-                        AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-                        Authentication authentication = authenticationManager.authenticate(JwtAuthentication.prepared(authToken));
-
-                        // authentication 등록 (= 인증)
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
+                    // authentication 등록 (= 인증)
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 } catch (Exception e) {
                     e.printStackTrace();
                     // 어떤 오류라도 발생 시 인증 과정을 무효로 한다.
                     SecurityContextHolder.clearContext();
                 }
             } else {
-                // accessToken 이 존재하지 않는 경우
+                // accessToken 이 존재하지 않는 경우 context 를 비운다.
                 SecurityContextHolder.clearContext();
             }
         }

@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.oauth.exception;
+package me.cutehammond.pill.global.oauth.handler.exception;
 
 import org.springframework.security.core.AuthenticationException;
 

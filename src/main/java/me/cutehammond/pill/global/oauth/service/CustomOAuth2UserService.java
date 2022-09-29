@@ -3,10 +3,11 @@ package me.cutehammond.pill.global.oauth.service;
 import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.domain.user.domain.User;
 import me.cutehammond.pill.domain.user.domain.dao.sql.UserRepository;
+import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
 import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.entity.Role;
-import me.cutehammond.pill.global.oauth.entity.UserPrincipal;
-import me.cutehammond.pill.global.oauth.exception.OAuth2ProviderMissMatchException;
+import me.cutehammond.pill.global.oauth.entity.OAuth2UserImpl;
+import me.cutehammond.pill.global.oauth.handler.exception.OAuth2ProviderMissMatchException;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfo;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfoFactory;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -64,7 +65,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             savedUser = registerUser(userInfo, provider);
         }
 
-        return UserPrincipal.create(savedUser, userInfo);
+        return OAuth2UserImpl.from(UserResponse.getResponse(savedUser), userInfo);
     }
 
     private User registerUser(OAuth2UserInfo userInfo, Provider provider) {

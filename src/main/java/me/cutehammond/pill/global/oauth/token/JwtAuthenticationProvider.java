@@ -26,9 +26,9 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
     private final UserService userService;
 
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    public Authentication authenticate(Authentication authentication) throws InternalAuthenticationServiceException {
         JwtAuthentication jwtAuthentication = (JwtAuthentication) authentication;
-        Claims claims = jwtAuthentication.getToken().getTokenClaims();
+        Claims claims = jwtAuthentication.getToken().getClaims();
 
         String issuer = claims.getIssuer();
         String userId = claims.getAudience();

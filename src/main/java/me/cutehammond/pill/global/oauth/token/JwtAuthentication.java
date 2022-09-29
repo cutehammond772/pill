@@ -2,7 +2,7 @@ package me.cutehammond.pill.global.oauth.token;
 
 import lombok.Getter;
 import lombok.NonNull;
-import me.cutehammond.pill.global.oauth.exception.TokenValidFailedException;
+import me.cutehammond.pill.global.oauth.handler.exception.TokenValidFailedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -23,9 +23,6 @@ public final class JwtAuthentication implements Authentication {
 
     /** AuthenticationManager 에서 인증(Authenticate) 과정에 필요한 정보를 담습니다. */
     public static JwtAuthentication prepared(@NonNull AuthToken token) {
-        if (!token.validate())
-            throw new TokenValidFailedException();
-
         return new JwtAuthentication(token);
     }
 
@@ -33,7 +30,7 @@ public final class JwtAuthentication implements Authentication {
     public JwtAuthentication authenticated(@NonNull String userId) {
         JwtAuthentication jwtAuthentication = new JwtAuthentication(token, userId);
 
-        if (!getToken().getTokenClaims().getAudience().equals(userId))
+        if (!getToken().getClaims().getAudience().equals(userId))
             throw new TokenValidFailedException();
 
         jwtAuthentication.authenticated = true;
@@ -79,7 +76,7 @@ public final class JwtAuthentication implements Authentication {
 
     @Override
     public void setAuthenticated(boolean isAuthenticated) {
-        throw new RuntimeException("This method cannot access. Use prepared() or authenticated() instead.");
+        throw new UnsupportedOperationException("This method cannot access. Use prepared() or authenticated() instead.");
     }
 
     /** getPrincipal()과 동일한 값을 반환합니다. */

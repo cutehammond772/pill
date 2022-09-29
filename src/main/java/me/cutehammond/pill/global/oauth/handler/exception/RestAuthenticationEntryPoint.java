@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.oauth.exception;
+package me.cutehammond.pill.global.oauth.handler.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;

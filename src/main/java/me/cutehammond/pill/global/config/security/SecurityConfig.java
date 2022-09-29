@@ -1,10 +1,9 @@
 package me.cutehammond.pill.global.config.security;
 
 import lombok.RequiredArgsConstructor;
-import me.cutehammond.pill.global.config.properties.AppProperties;
 import me.cutehammond.pill.global.config.properties.CorsProperties;
 import me.cutehammond.pill.global.oauth.entity.Role;
-import me.cutehammond.pill.global.oauth.exception.RestAuthenticationEntryPoint;
+import me.cutehammond.pill.global.oauth.handler.exception.RestAuthenticationEntryPoint;
 import me.cutehammond.pill.global.oauth.filter.JwtAuthenticationFilter;
 import me.cutehammond.pill.global.oauth.handler.OAuth2AuthFailureHandler;
 import me.cutehammond.pill.global.oauth.handler.OAuth2AuthSuccessHandler;
@@ -15,8 +14,7 @@ import me.cutehammond.pill.global.oauth.token.AuthTokenProvider;
 import me.cutehammond.pill.global.oauth.token.JwtAuthenticationProvider;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -27,28 +25,28 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import static me.cutehammond.pill.global.common.PathFactory.*;
+
 import java.util.List;
 
-@Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(
-        securedEnabled = true,
-        jsr250Enabled = true,
-        prePostEnabled = true
-)
 public class SecurityConfig {
 
     private final CorsProperties corsProperties;
-    private final AppProperties appProperties;
-    private final AuthTokenProvider tokenProvider;
     private final CustomOAuth2UserService oAuth2UserService;
-    private final TokenAccessDeniedHandler tokenAccessDeniedHandler;
-    private final HttpSecurity http;
+
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
+    private final AuthTokenProvider authTokenProvider;
+
+    private final OAuth2AuthorizationRequestRepository oAuth2AuthorizationRequestRepository;
+
+    private final TokenAccessDeniedHandler tokenAccessDeniedHandler;
+    private final OAuth2AuthSuccessHandler oAuth2AuthSuccessHandler;
+    private final OAuth2AuthFailureHandler oAuth2AuthFailureHandler;
 
     @Bean
-    public SecurityFilterChain filterChain() throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // CORS 를 활성화하여 프론트 단과의 통신이 가능하도록 한다.
         http.cors();
 
@@ -75,86 +73,61 @@ public class SecurityConfig {
                 // CORS 요청 관련
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                 // Auth Request 는 모두 접근 가능하도록 한다.
-                .antMatchers("/auth/**").permitAll()
+                .antMatchers(AUTH.all().path()).permitAll()
 
-                .antMatchers("/api/**").hasAnyAuthority(Role.DEFAULT_USER.getKey())
-                .antMatchers("/api/**/admin/**").hasAnyAuthority(Role.ADMIN.getKey())
+                .antMatchers(API.all().path()).hasAnyAuthority(Role.DEFAULT_USER.getKey())
+                .antMatchers(API.all().request("admin").all().path()).hasAnyAuthority(Role.ADMIN.getKey())
                 .anyRequest().authenticated();
 
         // OAuth2 를 이용한 Login 세부 설정
         http.oauth2Login()
                 // 프론트 단에서 로그인하는 링크가 {baseUri}/auth/login/{provider}?redirect_uri=... 가 된다.
                 .authorizationEndpoint()
-                .baseUri("/auth/login")
-                .authorizationRequestRepository(oAuth2AuthorizationRequestRepository())
+                .baseUri(AUTH.request("login").path())
+                .authorizationRequestRepository(oAuth2AuthorizationRequestRepository)
                 .and()
 
                 // {provider} 플랫폼에서 로그인 시 이 baseUri 로 authorization_code 와 함께 redirect 된다.
                 // 로그인 실패 시에도 똑같은 링크로 redirect 된다.
                 .redirectionEndpoint()
-                .baseUri("/auth/callback/**")
+                .baseUri(AUTH.request("callback").all().path())
                 .and()
 
                 // 위 redirection 과정에서 user 설정을 위해 아래의 서비스가 호출된다.
                 .userInfoEndpoint()
                 .userService(oAuth2UserService)
                 .and()
-
                 // 로그인 성공과 실패 시 호출될 Handler 를 설정한다.
-                .successHandler(oAuth2AuthenticationSuccessHandler())
-                .failureHandler(oAuth2AuthenticationFailureHandler());
+                .successHandler(oAuth2AuthSuccessHandler)
+                .failureHandler(oAuth2AuthFailureHandler);
 
         // ApplicationManager.authenticate() 과정에서 JwtAuthentication 인증을 담당할 Provider 를 등록한다.
         http
                 .authenticationProvider(jwtAuthenticationProvider);
 
-        //
-        http.logout();
+        // Logout 세부 설정
+        http.logout()
+                .logoutSuccessUrl(FRONT_PATH.path())
+                .logoutUrl(AUTH.request("logout").path())
+                .deleteCookies(
+                        AuthTokenProvider.REFRESH_TOKEN,
+                        OAuth2AuthorizationRequestRepository.OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
+                        OAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME
+                )
+                .clearAuthentication(true);
 
         // formLogin 을 사용하지 않는 대신 JWT 검증을 통해 인증하므로 필터를 추가한다.
-        http.addFilterAfter(tokenAuthenticationFilter(), LogoutFilter.class);
+        http.addFilterAfter(jwtAuthenticationFilter(authTokenProvider, http), LogoutFilter.class);
         return http.build();
     }
 
-    /*
-     * 토큰 필터 설정
-     * */
     @Bean
-    public JwtAuthenticationFilter tokenAuthenticationFilter() {
-        return new JwtAuthenticationFilter(tokenProvider, http);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(AuthTokenProvider authTokenProvider, HttpSecurity httpSecurity) {
+        return new JwtAuthenticationFilter(authTokenProvider, httpSecurity);
     }
 
     /*
-     * 쿠키 기반 인가 Repository
-     * 인가 응답을 연계 하고 검증할 때 사용.
-     * */
-    @Bean
-    public OAuth2AuthorizationRequestRepository oAuth2AuthorizationRequestRepository() {
-        return new OAuth2AuthorizationRequestRepository();
-    }
-
-    /*
-     * Oauth 인증 성공 핸들러
-     * */
-    @Bean
-    public OAuth2AuthSuccessHandler oAuth2AuthenticationSuccessHandler() {
-        return new OAuth2AuthSuccessHandler(
-                tokenProvider,
-                appProperties,
-                oAuth2AuthorizationRequestRepository()
-        );
-    }
-
-    /*
-     * Oauth 인증 실패 핸들러
-     * */
-    @Bean
-    public OAuth2AuthFailureHandler oAuth2AuthenticationFailureHandler() {
-        return new OAuth2AuthFailureHandler(oAuth2AuthorizationRequestRepository());
-    }
-
-    /*
-     * Cors 설정
+     * CORS Configuration
      * */
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
@@ -167,7 +140,7 @@ public class SecurityConfig {
         corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(corsConfig.getMaxAge());
 
-        corsConfigSource.registerCorsConfiguration("/**", corsConfig);
+        corsConfigSource.registerCorsConfiguration(ALL.path(), corsConfig);
         return corsConfigSource;
     }
 

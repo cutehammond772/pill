@@ -63,12 +63,12 @@ public class OAuth2AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHand
         // JwtAuthentication 등록
         JwtAuthentication jwtAuthentication = JwtAuthentication
                 .prepared(accessToken)
-                .authenticated(accessToken.getTokenClaims().getAudience());
+                .authenticated(accessToken.getClaims().getAudience());
 
         SecurityContextHolder.getContext().setAuthentication(jwtAuthentication);
 
-        // refreshToken 생성 (JwtAuthentication 등록이 우선시되어야 한다.)
-        tokenProvider.issueRefreshToken(request, response);
+        // RefreshToken 등록
+        tokenProvider.updateRefreshToken(request, response, accessToken);
 
         // 인증 과정에 사용했던 쿠키들을 삭제한다.
         clearAuthenticationAttributes(request, response);
