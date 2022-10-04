@@ -16,15 +16,25 @@ public final class CookieUtil {
     /**
      * 'name' 에 해당하는 Cookie 를 반환합니다.
      */
-    public static Optional<Cookie> getCookie(HttpServletRequest request, @NonNull String name) {
+    public static Optional<CookieResponse> getCookie(HttpServletRequest request, @NonNull String name) {
         var cookies = request.getCookies();
 
         if (cookies == null)
             return Optional.empty();
 
-        return Stream.of(cookies)
+        var cookie = Stream.of(cookies)
                 .filter(c -> c.getName().equals(name))
                 .findFirst();
+
+        if (cookie.isEmpty())
+            return Optional.empty();
+
+        CookieResponse cookieResponse = CookieResponse.builder()
+                .name(cookie.get().getName())
+                .value(cookie.get().getValue())
+                .build();
+
+        return Optional.of(cookieResponse);
     }
 
     /**
@@ -48,16 +58,16 @@ public final class CookieUtil {
      * @return name 에 해당하는 cookie 가 없을 경우 false를 반환합니다. (기본적으로 true)
      * */
     public static boolean deleteCookie(HttpServletRequest request, HttpServletResponse response, @NonNull String name) {
-        Cookie cookie = getCookie(request, name).orElse(null);
+        var cookie = getCookie(request, name);
 
-        if (cookie == null) // Cookie not found
+        if (cookie.isEmpty()) // Cookie not found
             return false;
 
-        cookie.setValue("");
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
+        Cookie del = new Cookie(cookie.get().getName(), cookie.get().getValue());
+        del.setPath("/");
+        del.setMaxAge(0);
 
-        response.addCookie(cookie);
+        response.addCookie(del);
         return true;
     }
 
@@ -65,8 +75,8 @@ public final class CookieUtil {
         return Base64.getUrlEncoder().encodeToString(SerializationUtils.serialize(obj));
     }
 
-    public static <T> T deserialize(@NonNull Cookie cookie, @NonNull Class<T> cls) {
-        return cls.cast(SerializationUtils.deserialize(Base64.getUrlDecoder().decode(cookie.getValue())));
+    public static <T> T deserialize(@NonNull CookieResponse cookieResponse, @NonNull Class<T> cls) {
+        return cls.cast(SerializationUtils.deserialize(Base64.getUrlDecoder().decode(cookieResponse.getValue())));
     }
 
 }

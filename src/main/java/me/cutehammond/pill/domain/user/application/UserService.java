@@ -1,11 +1,9 @@
 package me.cutehammond.pill.domain.user.application;
 
 import lombok.RequiredArgsConstructor;
-import me.cutehammond.pill.domain.user.domain.User;
 import me.cutehammond.pill.domain.user.domain.dao.sql.UserRepository;
 import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
-import me.cutehammond.pill.global.oauth.token.JwtAuthentication;
-import org.springframework.security.core.Authentication;
+import me.cutehammond.pill.global.oauth.auth.JwtAuthentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +17,8 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public UserResponse getUser(String userId) {
-        return UserResponse.getResponse(userRepository.findByUserId(userId));
+    public Optional<UserResponse> getUser(String userId) {
+        return userRepository.findByUserId(userId).map(UserResponse::getResponse);
     }
 
     /**
@@ -33,7 +31,7 @@ public class UserService {
         if (authentication == null)
             return Optional.empty();
 
-        return Optional.ofNullable(getUser(authentication.getPrincipal()));
+        return getUser(authentication.getPrincipal());
     }
 
 }

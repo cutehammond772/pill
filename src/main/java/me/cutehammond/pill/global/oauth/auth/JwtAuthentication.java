@@ -1,14 +1,15 @@
-package me.cutehammond.pill.global.oauth.token;
+package me.cutehammond.pill.global.oauth.auth;
 
 import lombok.Getter;
 import lombok.NonNull;
-import me.cutehammond.pill.global.oauth.handler.exception.TokenValidFailedException;
+import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
+import me.cutehammond.pill.global.oauth.exception.TokenValidFailedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 public final class JwtAuthentication implements Authentication {
 
@@ -17,7 +18,7 @@ public final class JwtAuthentication implements Authentication {
     private final AuthToken token;
 
     private final String userId;
-    private final Collection<? extends GrantedAuthority> authorities = new ArrayList<>();
+    private Collection<? extends GrantedAuthority> authorities;
 
     private boolean authenticated = false;
 
@@ -27,19 +28,21 @@ public final class JwtAuthentication implements Authentication {
     }
 
     /** 인증이 성공한 뒤 검증된 principal 이 담긴 객체를 생성합니다. */
-    public JwtAuthentication authenticated(@NonNull String userId) {
-        JwtAuthentication jwtAuthentication = new JwtAuthentication(token, userId);
+    public JwtAuthentication authenticated(@NonNull UserResponse userResponse) {
+        JwtAuthentication jwtAuthentication = new JwtAuthentication(token, userResponse.getUserId());
 
-        if (!getToken().getClaims().getAudience().equals(userId))
+        if (!getToken().getClaims().getAudience().equals(userResponse.getUserId()))
             throw new TokenValidFailedException();
 
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(userResponse.getRole().getKey());
+
+        jwtAuthentication.authorities = List.of(authority);
         jwtAuthentication.authenticated = true;
         return jwtAuthentication;
     }
 
     private JwtAuthentication(AuthToken token) {
-        this.token = token;
-        this.userId = null;
+        this(token, null);
     }
 
     private JwtAuthentication(AuthToken token, String userId) {
@@ -49,7 +52,7 @@ public final class JwtAuthentication implements Authentication {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.unmodifiableCollection(authorities);
+        return authorities == null ? List.of() : authorities;
     }
 
     /** JWT 의 경우 password 가 필요하지 않으므로 credentials 가 존재하지 않습니다. */

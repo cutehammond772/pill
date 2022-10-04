@@ -1,11 +1,9 @@
-package me.cutehammond.pill.global.oauth.token;
+package me.cutehammond.pill.global.oauth.auth;
 
 import io.jsonwebtoken.*;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.cutehammond.pill.global.oauth.entity.Role;
 
 import java.security.Key;
 import java.util.Date;

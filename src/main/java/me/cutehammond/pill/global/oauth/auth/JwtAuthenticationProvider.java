@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.oauth.token;
+package me.cutehammond.pill.global.oauth.auth;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -7,7 +7,6 @@ import me.cutehammond.pill.domain.user.application.UserService;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -40,10 +39,12 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         if (!AuthToken.AuthTokenType.ACCESS_TOKEN.name().equals(tokenName))
             throw new InternalAuthenticationServiceException("A subject of this token must be 'AccessToken'.");
 
-        if (userService.getUser(userId) == null)
+        var userOptional = userService.getUser(userId);
+
+        if (userOptional.isEmpty())
             throw new InternalAuthenticationServiceException("Cannot find user '" + userId + "'.");
 
-        return jwtAuthentication.authenticated(userId);
+        return jwtAuthentication.authenticated(userOptional.get());
     }
 
     @Override

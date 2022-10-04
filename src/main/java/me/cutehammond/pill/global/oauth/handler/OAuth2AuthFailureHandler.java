@@ -2,6 +2,7 @@ package me.cutehammond.pill.global.oauth.handler;
 
 import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.global.oauth.repository.OAuth2AuthorizationRequestRepository;
+import me.cutehammond.pill.global.utils.cookie.CookieResponse;
 import me.cutehammond.pill.global.utils.cookie.CookieUtil;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
@@ -27,7 +28,7 @@ public class OAuth2AuthFailureHandler extends SimpleUrlAuthenticationFailureHand
             throws IOException, ServletException {
         // 로그인 실패 시 기존에 cookie 에 저장된 redirect uri 를 찾는다.
         String url = CookieUtil.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
-                .map(Cookie::getValue)
+                .map(CookieResponse::getValue)
                 .orElse("/");
 
         // 오류를 출력한다.

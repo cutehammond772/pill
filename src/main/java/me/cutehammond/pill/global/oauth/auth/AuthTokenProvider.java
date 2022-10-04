@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.oauth.token;
+package me.cutehammond.pill.global.oauth.auth;
 
 import io.jsonwebtoken.security.Keys;
 import lombok.NonNull;
@@ -8,7 +8,6 @@ import me.cutehammond.pill.global.utils.cookie.CookieRequest;
 import me.cutehammond.pill.global.utils.cookie.CookieSecureType;
 import me.cutehammond.pill.global.utils.cookie.CookieUtil;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;

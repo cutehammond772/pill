@@ -12,11 +12,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public final class ApiResponse {
 
-    public static <T> ResponseEntity<T> success(T body) {
+    /* 기존 ResponseEntity 와 별다른 차이가 없으므로 보강이 필요하다. */
+
+    public static <T> ResponseEntity<T> success(@NonNull T body) {
         return ResponseEntity.ok(body);
     }
 
-    public static <T> ResponseEntity<T> fail(T body) {
+    public static <T> ResponseEntity<T> fail(@NonNull T body) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 

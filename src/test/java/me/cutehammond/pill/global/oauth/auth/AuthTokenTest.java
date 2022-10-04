@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.oauth.token;
+package me.cutehammond.pill.global.oauth.auth;
 
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;

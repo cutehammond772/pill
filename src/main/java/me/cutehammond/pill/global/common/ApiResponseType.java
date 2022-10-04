@@ -9,11 +9,14 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ApiResponseType {
 
+    /* Authentication */
     INVALID_ACCESS_TOKEN(HttpStatus.BAD_REQUEST, "Invalid access token."),
     INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "Invalid refresh token."),
+
     NO_REFRESH_TOKEN(HttpStatus.NOT_FOUND, "Refresh token is not found."),
     NO_ACCESS_TOKEN(HttpStatus.NOT_FOUND, "Access token is not found."),
-    NOT_EXPIRED_TOKEN_YET(HttpStatus.BAD_REQUEST, "Not expired token yet.");
+
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Need to authorize.");
 
     @NonNull
     private final HttpStatus status;

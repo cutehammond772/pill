@@ -7,7 +7,7 @@ import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
 import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.entity.Role;
 import me.cutehammond.pill.global.oauth.entity.OAuth2UserImpl;
-import me.cutehammond.pill.global.oauth.handler.exception.OAuth2ProviderMissMatchException;
+import me.cutehammond.pill.global.oauth.exception.OAuth2ProviderMissMatchException;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfo;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfoFactory;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -50,9 +50,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(provider, user.getAttributes());
 
         // UserRepository 에서 User 가져오기
-        User savedUser = userRepository.findByUserId(userInfo.getId());
+        var userOptional = userRepository.findByUserId(userInfo.getId());
 
-        if (savedUser != null) {
+        if (userOptional.isPresent()) {
+            User savedUser = userOptional.get();
             // userId 가 같지만 Provider 가 다를 경우 예외 처리 (한 userId 당 Provider 는 하나만 연동 가능하도록 한다. / 임시)
             if (provider != savedUser.getProvider()) {
                 throw new OAuth2ProviderMissMatchException("Account Provider mismatched. [Registered: " + savedUser.getProvider().name() + "] != [Accessed: " + provider.name() + "]");
@@ -60,12 +61,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             // Provider 가 제공하는 계정의 정보가 바뀌면 User 의 정보도 바뀌도록 한다.
             savedUser = updateUser(savedUser, userInfo);
+            return OAuth2UserImpl.from(UserResponse.getResponse(savedUser), userInfo);
         } else {
             // user 를 새로 등록한다.
-            savedUser = registerUser(userInfo, provider);
+            User registeredUser = registerUser(userInfo, provider);
+            return OAuth2UserImpl.from(UserResponse.getResponse(registeredUser), userInfo);
         }
-
-        return OAuth2UserImpl.from(UserResponse.getResponse(savedUser), userInfo);
     }
 
     private User registerUser(OAuth2UserInfo userInfo, Provider provider) {

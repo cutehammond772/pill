@@ -15,10 +15,8 @@ public enum CookieSecureType {
     /** 동일한 도메인 이외의 크로스 도메인에서 주고받을 수 있습니다. <br> 단 읽기만 가능합니다. */
     NONE(false, false);
 
-    @NonNull
     public final boolean httpOnly;
 
-    @NonNull
     public final boolean sameSiteSecured;
 
     private static final String SS_STRICT = "Strict";

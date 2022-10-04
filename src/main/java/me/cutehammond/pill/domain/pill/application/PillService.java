@@ -111,11 +111,14 @@ public class PillService {
                 .map(this::saveElementsRecursively)
                 .forEach(rootElement::addSiblingBack);
 
-        User user = userRepository.findByUserId(pillCreateRequest.getUserId());
+        var userOptional = userRepository.findByUserId(pillCreateRequest.getUserId());
+
+        if (userOptional.isEmpty())
+            throw new IllegalArgumentException("Cannot find user: " + pillCreateRequest.getUserId());
 
         Pill pill = Pill.builder()
                 .title(pillCreateRequest.getTitle())
-                .user(user)
+                .user(userOptional.get())
                 .rootElement(rootElement.getId()).build();
 
         pill = pillRepository.save(pill);

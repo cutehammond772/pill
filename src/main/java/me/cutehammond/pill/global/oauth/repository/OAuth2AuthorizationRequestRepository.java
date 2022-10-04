@@ -37,7 +37,7 @@ public class OAuth2AuthorizationRequestRepository implements AuthorizationReques
                 .name(OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)
                 .value(CookieUtil.serialize(authorizationRequest))
                 .maxAge(cookieExpireSeconds)
-                .secureType(CookieSecureType.STRICT)
+                .secureType(CookieSecureType.NONE)
                 .build();
 
         CookieUtil.addCookie(response, cookieRequest);
@@ -48,7 +48,7 @@ public class OAuth2AuthorizationRequestRepository implements AuthorizationReques
                     .name(REDIRECT_URI_PARAM_COOKIE_NAME)
                     .value(redirectUriAfterLogin)
                     .maxAge(cookieExpireSeconds)
-                    .secureType(CookieSecureType.STRICT)
+                    .secureType(CookieSecureType.NONE)
                     .build();
 
             CookieUtil.addCookie(response, redirectCookieRequest);

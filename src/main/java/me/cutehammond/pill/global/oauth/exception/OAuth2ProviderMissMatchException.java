@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.oauth.handler.exception;
+package me.cutehammond.pill.global.oauth.exception;
 
 public class OAuth2ProviderMissMatchException extends RuntimeException {
 
