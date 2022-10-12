@@ -1,15 +1,21 @@
 package me.cutehammond.pill.global.oauth.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import me.cutehammond.pill.domain.user.exception.PillUserUnauthorizedException;
 import me.cutehammond.pill.global.config.properties.AppProperties;
+import me.cutehammond.pill.global.exception.APIErrorResponse;
+import me.cutehammond.pill.global.exception.ErrorCode;
 import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfo;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfoFactory;
 import me.cutehammond.pill.global.oauth.repository.OAuth2AuthorizationRequestRepository;
-import me.cutehammond.pill.global.oauth.auth.AuthToken;
+import me.cutehammond.pill.global.oauth.entity.AuthToken;
 import me.cutehammond.pill.global.oauth.auth.AuthTokenProvider;
-import me.cutehammond.pill.global.utils.cookie.CookieResponse;
-import me.cutehammond.pill.global.utils.cookie.CookieUtil;
+import me.cutehammond.pill.global.utils.PillSerializationUtils;
+import me.cutehammond.pill.global.utils.cookie.dto.CookieResponse;
+import me.cutehammond.pill.global.utils.cookie.CookieUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -21,7 +27,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Base64;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 
 import static me.cutehammond.pill.global.oauth.repository.OAuth2AuthorizationRequestRepository.*;
@@ -31,7 +39,7 @@ import static me.cutehammond.pill.global.oauth.repository.OAuth2AuthorizationReq
  * 1. 이전 과정에서 SecurityContext 에 등록된 OAuth2AuthenticationToken 을 가져옵니다. <br>
  * 2. 해당 Authentication 을 기반으로 accessToken 을 생성합니다. <br>
  * 3. refreshToken 을 등록합니다. <br>
- * 4. 리다이렉트 링크를 프론트 단으로 보냅니다. <br>
+ * 4. 리다이렉트 링크를 클라이언트 단으로 보냅니다. <br>
  * */
 @Component
 @RequiredArgsConstructor
@@ -40,6 +48,8 @@ public class OAuth2AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHand
     private final AuthTokenProvider tokenProvider;
     private final AppProperties appProperties;
     private final OAuth2AuthorizationRequestRepository authorizationRequestRepository;
+
+    public static final String SPECIFIC_CODE = "OAuth2AuthenticationSuccess";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -62,7 +72,23 @@ public class OAuth2AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHand
         // 인증 과정에 사용했던 쿠키들을 삭제한다.
         clearAuthenticationAttributes(request, response);
 
-        // redirect 요청을 보낸다.
+        APIErrorResponse errorResponse = APIErrorResponse.builder()
+                .errorCode(ErrorCode.OK)
+                .httpStatus(HttpStatus.OK)
+                .specificCode(SPECIFIC_CODE)
+                .message("authentication succeeded.")
+                .extra(Map.of(REDIRECT_URI_PARAM_COOKIE_NAME, uri))
+                .build();
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(errorResponse);
+
+        // response에 APIErrorResponse를 실어서 보낸다.
+        uri = UriComponentsBuilder
+                .fromUriString(uri)
+                .queryParam("response", Base64.getEncoder().encodeToString(json.getBytes()))
+                .toUriString();
+
         getRedirectStrategy().sendRedirect(request, response, uri);
     }
 
@@ -82,18 +108,18 @@ public class OAuth2AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHand
     }
 
     private String determineUri(HttpServletRequest request) {
-        Optional<String> redirectUri = CookieUtil.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
+        Optional<String> redirectUri = CookieUtils.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
                 .map(CookieResponse::getValue);
 
         // 허용된 redirect uri 가 아닌 경우
         if(redirectUri.isPresent() && !isAuthorizedRedirectUri(redirectUri.get())) {
-            throw new IllegalArgumentException("We've got an Unauthorized Redirect URI and can't proceed with the authentication.");
+            throw new PillUserUnauthorizedException("We've got an Unauthorized Redirect URI and can't proceed with the authentication.");
         }
 
         // cookie 내의 redirect uri 가 존재하지 않으면 등록된 authorizedRedirectUri 중 첫 번째 uri 를 대신 사용한다.
         String targetUrl = redirectUri.orElse(appProperties.getOauth2().getAuthorizedRedirectUris().get(0));
 
-        // access token 이 담긴 redirectUri 가 반환된다. 이때 프론트 단에서 이를 받아 저장한다.
+        // access token 이 담긴 redirectUri 가 반환된다. 이를 클라이언트 단이 받아 저장한다.
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .build().toUriString();
     }

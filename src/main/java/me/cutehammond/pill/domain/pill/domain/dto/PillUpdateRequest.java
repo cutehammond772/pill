@@ -12,7 +12,6 @@ public final class PillUpdateRequest {
     @NonNull
     private final String title;
 
-    @NonNull
     private final long id;
 
 }

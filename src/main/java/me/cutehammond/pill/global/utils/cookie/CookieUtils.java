@@ -1,6 +1,8 @@
 package me.cutehammond.pill.global.utils.cookie;
 
 import lombok.NonNull;
+import me.cutehammond.pill.global.utils.cookie.dto.CookieRequest;
+import me.cutehammond.pill.global.utils.cookie.dto.CookieResponse;
 import org.springframework.http.ResponseCookie;
 import org.springframework.util.SerializationUtils;
 
@@ -11,7 +13,7 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public final class CookieUtil {
+public final class CookieUtils {
 
     /**
      * 'name' 에 해당하는 Cookie 를 반환합니다.
@@ -69,14 +71,6 @@ public final class CookieUtil {
 
         response.addCookie(del);
         return true;
-    }
-
-    public static String serialize(@NonNull Object obj) {
-        return Base64.getUrlEncoder().encodeToString(SerializationUtils.serialize(obj));
-    }
-
-    public static <T> T deserialize(@NonNull CookieResponse cookieResponse, @NonNull Class<T> cls) {
-        return cls.cast(SerializationUtils.deserialize(Base64.getUrlDecoder().decode(cookieResponse.getValue())));
     }
 
 }

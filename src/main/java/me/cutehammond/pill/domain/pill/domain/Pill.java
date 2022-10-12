@@ -1,5 +1,6 @@
 package me.cutehammond.pill.domain.pill.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,11 +20,15 @@ import javax.validation.constraints.Size;
 @Table(name = "pill_table")
 public class Pill extends BaseTimeEntity {
 
+    @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sequence")
     private Long pillSequence;
 
+    /**
+     * pill의 제목을 나타냅니다. 수정 가능합니다.
+     */
     @NotNull
     @Column(nullable = false, name = "title")
     @Size(min = 2, max = 100)
@@ -33,6 +38,9 @@ public class Pill extends BaseTimeEntity {
     @Column(nullable = false, name = "root_element", unique = true)
     private ObjectId rootElement;
 
+    /**
+     * pill의 작성자를 나타냅니다.
+     */
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_sequence")

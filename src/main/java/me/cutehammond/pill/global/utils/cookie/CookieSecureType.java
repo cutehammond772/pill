@@ -8,9 +8,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum CookieSecureType {
 
-    /** 동일한 도메인에서만 주고받을 수 있으며, 프론트 단에서 접근할 수 없습니다. */
+    /** 동일한 도메인에서만 주고받을 수 있으며, 클라이언트 단에서 접근할 수 없습니다. */
     STRICT(true, true),
-    /** 동일한 도메인에서만 주고 받을 수 있으며, 프론트 단에서 쿠키에 접근할 수 있습니다. */
+    /** 동일한 도메인에서만 주고 받을 수 있으며, 클라이언트 단에서 쿠키에 접근할 수 있습니다. */
     DEFAULT(false, true),
     /** 동일한 도메인 이외의 크로스 도메인에서 주고받을 수 있습니다. <br> 단 읽기만 가능합니다. */
     NONE(false, false);

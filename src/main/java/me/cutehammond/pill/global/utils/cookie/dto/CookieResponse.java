@@ -1,4 +1,4 @@
-package me.cutehammond.pill.global.utils.cookie;
+package me.cutehammond.pill.global.utils.cookie.dto;
 
 import lombok.Builder;
 import lombok.Getter;

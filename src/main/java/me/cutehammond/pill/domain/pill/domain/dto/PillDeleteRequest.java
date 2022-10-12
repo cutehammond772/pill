@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PillDeleteRequest {
 
-    @NonNull
     private final long id;
 
 }

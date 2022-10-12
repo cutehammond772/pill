@@ -3,27 +3,38 @@ package me.cutehammond.pill.global.oauth.auth;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import me.cutehammond.pill.global.config.properties.AppProperties;
+import me.cutehammond.pill.global.oauth.entity.AuthToken;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
 
 @Slf4j
-@SpringBootTest
-@ActiveProfiles("dev")
+@ExtendWith(MockitoExtension.class)
+@DisplayName("AuthToken 단위 테스트")
 class AuthTokenTest {
 
-    @Autowired
     private AuthTokenProvider authTokenProvider;
 
-    @Autowired
+    @Mock
     private AppProperties appProperties;
 
+    @BeforeEach
+    void setUp() {
+        /* 임의의 jwt-secret-key를 주입한다.
+        * 이때 @InjectMocks를 사용하지 않는 이유는, 생성자 방식 DI이므로 Reflection을 통해 key 값을 주입할 수 없기 때문이다. */
+        authTokenProvider = new AuthTokenProvider("and0c2VjcmV0a2V5X3NwcmluZ2Jvb3R0ZXN0X2N1dGVoYW1tb25kNzcy", appProperties);
+    }
+
     @Test
-    void token_validation_fail() {
+    @DisplayName("테스트 - 토큰 생성자에 null값을 주입한 토큰의 값 검증")
+    void testTokenValidationFail() {
         /* then */
         assertThatNullPointerException().isThrownBy(() -> {
             /* when */
@@ -32,8 +43,10 @@ class AuthTokenTest {
     }
 
     @Test
-    void create_auth_token() {
+    @DisplayName("테스트 - 임의의 유효한 값을 주입하여 생성한 토큰의 유효성과 동일성 검증")
+    void testCreatingAuthToken() {
         /* given */
+        given(appProperties.getAuth()).willReturn(new AppProperties.Auth(null, 0L, 604800000L));
         Date now = new Date();
         String userId = "cutehammond772";
         long expiration = now.getTime() + appProperties.getAuth().getRefreshTokenExpiry();

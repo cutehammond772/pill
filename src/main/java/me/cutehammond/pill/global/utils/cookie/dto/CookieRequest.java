@@ -1,8 +1,9 @@
-package me.cutehammond.pill.global.utils.cookie;
+package me.cutehammond.pill.global.utils.cookie.dto;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import me.cutehammond.pill.global.utils.cookie.CookieSecureType;
 
 @Getter
 @Builder
@@ -14,7 +15,6 @@ public class CookieRequest {
     @NonNull
     private final String value;
 
-    @NonNull
     private final int maxAge;
 
     @NonNull

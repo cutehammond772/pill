@@ -22,7 +22,7 @@ public class UserService {
     }
 
     /**
-     * 현재 인증 상태인 사용자를 반환한다. <br> 이때 /auth/.. 경로로 요청이 들어온 경우 인증 정보가 없으므로 항상 null이 반환됨에 유의한다.
+     * 현재 인증 상태인 사용자를 반환합니다. <br> 이때 /auth/.. 경로로 요청이 들어온 경우 인증 정보가 없으므로 항상 null이 반환됨에 유의합니다.
      * */
     @Transactional(readOnly = true)
     public Optional<UserResponse> getCurrentUser() {

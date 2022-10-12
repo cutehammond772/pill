@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PathFactory {
 
+    /**
+     * 클라이언트 단의 인덱스입니다. 이후 배포 시 수정되어야 합니다.
+     */
     public static final PathFactory FRONT_PATH = new PathFactory("http://localhost:3000/");
 
     public static final PathFactory AUTH = new PathFactory("/auth");

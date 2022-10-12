@@ -1,9 +1,10 @@
 package me.cutehammond.pill.global.oauth.repository;
 
 import com.nimbusds.oauth2.sdk.util.StringUtils;
-import me.cutehammond.pill.global.utils.cookie.CookieRequest;
+import me.cutehammond.pill.global.utils.PillSerializationUtils;
+import me.cutehammond.pill.global.utils.cookie.dto.CookieRequest;
 import me.cutehammond.pill.global.utils.cookie.CookieSecureType;
-import me.cutehammond.pill.global.utils.cookie.CookieUtil;
+import me.cutehammond.pill.global.utils.cookie.CookieUtils;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
@@ -21,8 +22,8 @@ public class OAuth2AuthorizationRequestRepository implements AuthorizationReques
 
     @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
-        return CookieUtil.getCookie(request, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)
-                .map(cookie -> CookieUtil.deserialize(cookie, OAuth2AuthorizationRequest.class))
+        return CookieUtils.getCookie(request, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)
+                .map(cookie -> PillSerializationUtils.deserialize(cookie.getValue(), OAuth2AuthorizationRequest.class))
                 .orElse(null);
     }
 
@@ -35,12 +36,12 @@ public class OAuth2AuthorizationRequestRepository implements AuthorizationReques
 
         CookieRequest cookieRequest = CookieRequest.builder()
                 .name(OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)
-                .value(CookieUtil.serialize(authorizationRequest))
+                .value(PillSerializationUtils.serialize(authorizationRequest))
                 .maxAge(cookieExpireSeconds)
                 .secureType(CookieSecureType.NONE)
                 .build();
 
-        CookieUtil.addCookie(response, cookieRequest);
+        CookieUtils.addCookie(response, cookieRequest);
         String redirectUriAfterLogin = request.getParameter(REDIRECT_URI_PARAM_COOKIE_NAME);
 
         if (StringUtils.isNotBlank(redirectUriAfterLogin)) {
@@ -51,7 +52,7 @@ public class OAuth2AuthorizationRequestRepository implements AuthorizationReques
                     .secureType(CookieSecureType.NONE)
                     .build();
 
-            CookieUtil.addCookie(response, redirectCookieRequest);
+            CookieUtils.addCookie(response, redirectCookieRequest);
         }
     }
 
@@ -67,8 +68,8 @@ public class OAuth2AuthorizationRequestRepository implements AuthorizationReques
     }
 
     public void removeAuthorizationRequestCookies(HttpServletRequest request, HttpServletResponse response) {
-        CookieUtil.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
-        CookieUtil.deleteCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME);
+        CookieUtils.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
+        CookieUtils.deleteCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME);
     }
 
 }

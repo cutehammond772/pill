@@ -2,10 +2,10 @@ package me.cutehammond.pill.global.oauth.filter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.cutehammond.pill.global.oauth.auth.AuthToken;
+import me.cutehammond.pill.global.oauth.entity.AuthToken;
 import me.cutehammond.pill.global.oauth.auth.AuthTokenProvider;
 import me.cutehammond.pill.global.oauth.auth.JwtAuthentication;
-import me.cutehammond.pill.global.utils.HeaderUtil;
+import me.cutehammond.pill.global.utils.HeaderUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +18,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * JWT Token 인증을 담당하는 Security Filter입니다.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -32,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         /* auth request 의 경우 해당 필터를 넘기도록 한다.
          * ex. OAuth2 Login 과정 (-> 모두 /auth/..로 통일)
-         * ex. 프론트 단으로부터 accessToken 을 가져오는 요청 (/auth/access)
+         * ex. 클라이언트 단으로부터 accessToken 을 가져오는 요청 (/auth/access)
          *
          * ps. Session Policy 가 STATELESS 이므로 매 요청마다 이 필터를 거치지 않으면 Authentication 은 null 임에 명심해야 한다.
          * 즉 /auth/.. 경로로 요청을 보내면 Authentication 은 항상 null 로 설정된다.
@@ -42,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         // Header 내의 AccessToken 을 가져온다.
-        var tokenOptional = HeaderUtil.getAccessToken(request);
+        var tokenOptional = HeaderUtils.getAccessToken(request);
 
         if (tokenOptional.isPresent()) {
             String token = tokenOptional.get();

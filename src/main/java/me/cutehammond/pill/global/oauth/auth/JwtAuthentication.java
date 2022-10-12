@@ -3,7 +3,10 @@ package me.cutehammond.pill.global.oauth.auth;
 import lombok.Getter;
 import lombok.NonNull;
 import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
-import me.cutehammond.pill.global.oauth.exception.TokenValidFailedException;
+import me.cutehammond.pill.global.oauth.entity.AuthToken;
+import me.cutehammond.pill.global.oauth.exception.authentication.AuthenticationInvalidTokenException;
+import me.cutehammond.pill.global.oauth.exception.token.PillInvalidAuthTokenException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -32,7 +35,7 @@ public final class JwtAuthentication implements Authentication {
         JwtAuthentication jwtAuthentication = new JwtAuthentication(token, userResponse.getUserId());
 
         if (!getToken().getClaims().getAudience().equals(userResponse.getUserId()))
-            throw new TokenValidFailedException();
+            throw new AuthenticationInvalidTokenException();
 
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority(userResponse.getRole().getKey());
 
@@ -79,7 +82,7 @@ public final class JwtAuthentication implements Authentication {
 
     @Override
     public void setAuthenticated(boolean isAuthenticated) {
-        throw new UnsupportedOperationException("This method cannot access. Use prepared() or authenticated() instead.");
+        throw new InternalAuthenticationServiceException("setAuthenticated(boolean) cannot access. Use prepared() or authenticated() instead.");
     }
 
     /** getPrincipal()과 동일한 값을 반환합니다. */

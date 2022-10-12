@@ -1,13 +1,12 @@
 package me.cutehammond.pill.domain.user.api;
 
 import lombok.RequiredArgsConstructor;
-import me.cutehammond.pill.global.common.ApiResponse;
-import me.cutehammond.pill.global.common.ApiResponseType;
-import me.cutehammond.pill.global.oauth.auth.AuthToken;
+import me.cutehammond.pill.global.oauth.exception.token.PillAuthTokenNotFoundException;
+import me.cutehammond.pill.global.oauth.entity.AuthToken;
 import me.cutehammond.pill.global.oauth.auth.AuthTokenProvider;
-import me.cutehammond.pill.global.utils.cookie.CookieResponse;
-import me.cutehammond.pill.global.utils.cookie.CookieUtil;
-import me.cutehammond.pill.global.utils.HeaderUtil;
+import me.cutehammond.pill.global.utils.cookie.dto.CookieResponse;
+import me.cutehammond.pill.global.utils.cookie.CookieUtils;
+import me.cutehammond.pill.global.utils.HeaderUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,22 +26,22 @@ public class AuthController {
     @GetMapping("/access")
     public ResponseEntity<String> getAccessToken(HttpServletRequest request, HttpServletResponse response) {
         // refreshToken 의 존재 여부를 확인한다.
-        var tokenOptional = CookieUtil.getCookie(request, REFRESH_TOKEN);
+        var tokenOptional = CookieUtils.getCookie(request, REFRESH_TOKEN);
 
-        // 만약 존재하지 않을 경우 404(Not Found) 를 반환한다.
+        // 존재하지 않을 경우
         if (tokenOptional.isEmpty())
-            return ApiResponse.getResponse(ApiResponseType.NO_REFRESH_TOKEN);
+            throw new PillAuthTokenNotFoundException(AuthToken.AuthTokenType.REFRESH_TOKEN);
 
         try {
             AuthToken refreshToken = tokenProvider.convertAuthToken(tokenOptional.map(CookieResponse::getValue).orElse(null));
             AuthToken accessToken = tokenProvider.issueAccessToken(refreshToken);
 
-            return ApiResponse.success(accessToken.getToken());
+            return ResponseEntity.ok(accessToken.getToken());
         } catch (Exception e) {
             // 유효하지 않은 token 은 삭제된다.
-            CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
+            CookieUtils.deleteCookie(request, response, REFRESH_TOKEN);
 
-            return ApiResponse.getResponse(ApiResponseType.INVALID_ACCESS_TOKEN);
+            throw e;
         }
     }
 
@@ -50,25 +49,14 @@ public class AuthController {
      * 임의로 refreshToken 유효 기한을 연장할 때 요청됩니다. */
     @GetMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        try {
-            // header 로부터 accessToken 가져오기
-            var accessToken = HeaderUtil.getAccessToken(request).map(tokenProvider::convertAuthToken);
+        // header 로부터 accessToken 가져오기
+        var accessToken = HeaderUtils.getAccessToken(request).map(tokenProvider::convertAuthToken);
 
-            if (accessToken.isEmpty())
-                throw new NullPointerException();
+        if (accessToken.isEmpty())
+            throw new PillAuthTokenNotFoundException(AuthToken.AuthTokenType.ACCESS_TOKEN);
 
-            tokenProvider.updateRefreshToken(request, response, accessToken.get());
-            return ResponseEntity.ok().build();
-        } catch (NullPointerException e) {
-            // AccessToken 이 존재하지 않을 때
-            return ApiResponse.getResponse(ApiResponseType.NO_ACCESS_TOKEN);
-        } catch (IllegalArgumentException e) {
-            // AccessToken 이 유효하지 않을 때
-            return ApiResponse.getResponse(ApiResponseType.INVALID_ACCESS_TOKEN);
-        } catch (Exception e) {
-            // 기타 예외
-            return ApiResponse.fail(e.getMessage());
-        }
+        tokenProvider.updateRefreshToken(request, response, accessToken.get());
+        return ResponseEntity.ok().build();
     }
 }
 
