@@ -1,46 +1,49 @@
 package me.cutehammond.pill.domain.user.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import me.cutehammond.pill.domain.comment.domain.Comment;
+import me.cutehammond.pill.domain.like.domain.CommentLike;
+import me.cutehammond.pill.domain.like.domain.PillLike;
+import me.cutehammond.pill.domain.pill.domain.Pill;
+import me.cutehammond.pill.domain.point.domain.PillPointContainer;
 import me.cutehammond.pill.global.common.BaseTimeEntity;
 import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.entity.Role;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-@Getter
 @Entity
-@Table(name = "user_table")
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "USER_TABLE")
 public class User extends BaseTimeEntity {
 
-    @JsonIgnore
+    public static final String NO_EMAIL = "NO_EMAIL";
+
     @Id
-    @Column(name = "sequence")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userSequence;
+    @Column(nullable = false, name = "userNo")
+    private Long userNo;
 
     /**
      * 사용자의 고유 id를 나타냅니다.
      */
-    @NotNull
-    @Column(name = "id", length = 64, unique = true)
+    @Column(nullable = false, name = "userId", length = 64, unique = true)
     private String userId;
 
     /**
      * 사용자의 별칭(닉네임)을 나타냅니다. userId와 다르게 임의로 변경이 가능합니다.
      */
-    @NotNull
     @Setter
-    @Column(name = "name", length = 20)
+    @Column(nullable = false, name = "userName", length = 20)
     private String userName;
 
     /**
      * 사용자의 이메일 주소입니다. 이후 여러 검증에 사용될 수 있습니다.
      */
-    @NotNull
     @Column(name = "email", length = 128, unique = true)
     private String email;
 
@@ -48,30 +51,58 @@ public class User extends BaseTimeEntity {
      * provider로부터 가져온 프로파일 리소스입니다.
      */
     @Setter
-    @Column(name = "profile_url", length = 512)
+    @Column(nullable = false, name = "profileUrl", length = 512)
     private String profileUrl;
 
     /**
      * 회원가입 시 선택한 provider를 나타냅니다.
      */
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "provider", length = 20)
+    @Column(nullable = false, name = "provider", length = 20)
     private Provider provider;
 
     /**
      * 사용자의 권한을 나타냅니다.
      */
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", length = 20)
+    @Column(nullable = false, name = "role", length = 20)
     private Role role;
 
+    /**
+     * 사용자가 좋아요를 눌렀던 댓글의 모음을 나타냅니다.
+     */
+    @OneToMany(mappedBy = "user")
+    private final List<CommentLike> likedComments = new ArrayList<>();
+
+    /**
+     * 사용자가 작성한 댓글의 모음을 나타냅니다.
+     */
+    @OneToMany(mappedBy = "user")
+    private final List<Comment> comments = new ArrayList<>();
+
+    /**
+     * 사용자가 좋아요를 눌렀던 Pill의 모음을 나타냅니다.
+     */
+    @OneToMany(mappedBy = "user")
+    private final List<PillLike> likedPills = new ArrayList<>();
+
+    /**
+     * 사용자가 만든 Pill의 모음을 나타냅니다.
+     */
+    @OneToMany(mappedBy = "user")
+    private final List<Pill> pills = new ArrayList<>();
+
+    /**
+     * 사용자의 포인트를 관리하는 엔티티를 나타냅니다.
+     */
+    @OneToOne(mappedBy = "user")
+    private PillPointContainer pillPointContainer;
+
     @Builder
-    public User(String userId, String userName, String email, String profileUrl, Provider provider, Role role) {
+    public User(@NonNull String userId, @NonNull String userName, String email, @NonNull String profileUrl, @NonNull Provider provider, @NonNull Role role) {
         this.userId = userId;
         this.userName = userName;
-        this.email = Optional.ofNullable(email).orElse("NO_EMAIL");
+        this.email = Optional.ofNullable(email).orElse(NO_EMAIL);
         this.profileUrl = profileUrl;
         this.provider = provider;
         this.role = role;
