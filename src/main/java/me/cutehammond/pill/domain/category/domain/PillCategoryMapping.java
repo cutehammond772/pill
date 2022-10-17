@@ -9,12 +9,11 @@ import javax.persistence.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "PILL_CATEGORY_TABLE")
-public class PillCategoryMappingTable {
+public class PillCategoryMapping {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, name = "pillCategoryNo")
-    private Long pillCategoryNo;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "pill")
@@ -25,7 +24,7 @@ public class PillCategoryMappingTable {
     private Category category;
 
     @Builder
-    public PillCategoryMappingTable(@NonNull Pill pill, @NonNull Category category) {
+    public PillCategoryMapping(@NonNull Pill pill, @NonNull Category category) {
         this.pill = pill;
         this.category = category;
     }

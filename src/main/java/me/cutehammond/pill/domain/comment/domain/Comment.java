@@ -17,8 +17,7 @@ public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, name = "commentNo")
-    private Long commentNo;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pill")
@@ -28,7 +27,7 @@ public class Comment {
     @JoinColumn(name = "user")
     private User user;
 
-    @Column(nullable = false, name = "comment", length = 256)
+    @Column(nullable = false, length = 256)
     private String comment;
 
     @OneToMany(mappedBy = "comment")

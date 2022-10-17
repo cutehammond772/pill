@@ -14,14 +14,13 @@ public class PillIndex {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, name = "pillIndexNo")
-    private Long pillIndexNo;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pill")
     private Pill pill;
 
-    @Column(nullable = false, name = "indexName", length = 256)
+    @Column(nullable = false, length = 256)
     private String indexName;
 
     @OneToMany(mappedBy = "index")

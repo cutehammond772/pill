@@ -1,5 +1,8 @@
 package me.cutehammond.pill;
 
+import me.cutehammond.pill.domain.pill.domain.dao.nosql.PillElementRepository;
+import me.cutehammond.pill.domain.pill.domain.dao.sql.PillRepository;
+import me.cutehammond.pill.domain.point.domain.dao.sql.PillPointRepository;
 import me.cutehammond.pill.global.config.properties.AppProperties;
 import me.cutehammond.pill.global.config.properties.CorsProperties;
 import org.springframework.boot.SpringApplication;
@@ -14,8 +17,13 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableConfigurationProperties({
 		AppProperties.class, CorsProperties.class
 })
-@EnableJpaAuditing @EnableJpaRepositories(basePackages = { "me.cutehammond.pill.domain.pill.domain.dao.sql", "me.cutehammond.pill.domain.user.domain.dao.sql" })
-@EnableMongoAuditing @EnableMongoRepositories(basePackages = "me.cutehammond.pill.domain.pill.domain.dao.nosql")
+@EnableJpaAuditing @EnableJpaRepositories(basePackageClasses = {
+		PillRepository.class,
+		PillPointRepository.class
+})
+@EnableMongoAuditing @EnableMongoRepositories(basePackageClasses = {
+		PillElementRepository.class
+})
 public class PillApplication {
 
 	public static void main(String[] args) {

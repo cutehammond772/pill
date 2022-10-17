@@ -12,14 +12,13 @@ public class PillContent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, name = "pillContentNo")
-    private Long pillContentNo;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "index")
     private PillIndex index;
 
-    @Column(nullable = false, name = "content", length = 1024)
+    @Column(nullable = false, length = 1024)
     private String content;
 
     @Builder

@@ -17,7 +17,7 @@ public class PillController {
     private final PillService pillService;
 
     @PostMapping
-    public ResponseEntity createPill(@RequestBody PillCreateRequest createRequest, @RequestBody PillElementRequest elementRequest) {
+    public ResponseEntity<?> createPill(@RequestBody PillCreateRequest createRequest, @RequestBody PillElementRequest elementRequest) {
         // pillSequence (= id)
         long id = pillService.createPill(createRequest, elementRequest);
 
@@ -25,7 +25,7 @@ public class PillController {
     }
 
     @PutMapping("/{type}")
-    public ResponseEntity updatePill(@RequestBody PillUpdateRequest updateRequest, @RequestBody PillElementRequest elementRequest, @PathVariable String type) {
+    public ResponseEntity<?> updatePill(@RequestBody PillUpdateRequest updateRequest, @RequestBody PillElementRequest elementRequest, @PathVariable String type) {
         // pillSequence (= id)
         long id = pillService.update(updateRequest);
 
@@ -36,14 +36,14 @@ public class PillController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity find(@PathVariable Long id) {
+    public ResponseEntity<?> find(@PathVariable Long id) {
         PillResponse response = pillService.getPill(id);
 
         return ResponseEntity.ok(Map.of("response", response));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         PillResponse response = pillService.getPill(id);
         pillService.deletePill(new PillDeleteRequest(id));
 

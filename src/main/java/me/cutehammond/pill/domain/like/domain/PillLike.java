@@ -14,8 +14,7 @@ public class PillLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, name = "pillLikeNo")
-    private Long pillLikeNo;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "comment")

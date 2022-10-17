@@ -47,7 +47,7 @@ public class AuthController {
 
     /** 유효한 accessToken 을 이용하여 기존의 refreshToken 을 재발급합니다. <br>
      * 임의로 refreshToken 유효 기한을 연장할 때 요청됩니다. */
-    @GetMapping("/refresh")
+    @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         // header 로부터 accessToken 가져오기
         var accessToken = HeaderUtils.getAccessToken(request).map(tokenProvider::convertAuthToken);

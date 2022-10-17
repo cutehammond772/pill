@@ -14,14 +14,13 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, name = "categoryNo")
-    private Long categoryNo;
+    private Long id;
 
-    @Column(nullable = false, name = "name")
+    @Column(nullable = false)
     private String name;
 
     @OneToMany(mappedBy = "category")
-    private final List<PillCategoryMappingTable> pills = new ArrayList<>();
+    private final List<PillCategoryMapping> pills = new ArrayList<>();
 
     @Builder
     public Category(@NonNull String name) {
