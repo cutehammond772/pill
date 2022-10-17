@@ -11,6 +11,8 @@ import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.entity.Role;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,47 +27,49 @@ public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, name = "userNo")
-    private Long userNo;
+    private Long id;
 
     /**
      * 사용자의 고유 id를 나타냅니다.
      */
-    @Column(nullable = false, name = "userId", length = 64, unique = true)
+    @NotBlank
+    @Column(nullable = false, length = 64, unique = true)
     private String userId;
 
     /**
      * 사용자의 별칭(닉네임)을 나타냅니다. userId와 다르게 임의로 변경이 가능합니다.
      */
     @Setter
-    @Column(nullable = false, name = "userName", length = 20)
+    @NotBlank
+    @Column(nullable = false, length = 20)
     private String userName;
 
     /**
      * 사용자의 이메일 주소입니다. 이후 여러 검증에 사용될 수 있습니다.
      */
-    @Column(name = "email", length = 128, unique = true)
+    @Email
+    @Column(length = 128, unique = true)
     private String email;
 
     /**
      * provider로부터 가져온 프로파일 리소스입니다.
      */
     @Setter
-    @Column(nullable = false, name = "profileUrl", length = 512)
+    @Column(nullable = false, length = 512)
     private String profileUrl;
 
     /**
      * 회원가입 시 선택한 provider를 나타냅니다.
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "provider", length = 20)
+    @Column(nullable = false, length = 20)
     private Provider provider;
 
     /**
      * 사용자의 권한을 나타냅니다.
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "role", length = 20)
+    @Column(nullable = false, length = 20)
     private Role role;
 
     /**
@@ -93,9 +97,10 @@ public class User extends BaseTimeEntity {
     private final List<Pill> pills = new ArrayList<>();
 
     /**
-     * 사용자의 포인트를 관리하는 엔티티를 나타냅니다.
+     * 사용자의 포인트를 관리하는 엔티티입니다.
      */
-    @OneToOne(mappedBy = "user")
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn
     private PillPointContainer pillPointContainer;
 
     @Builder
@@ -106,6 +111,7 @@ public class User extends BaseTimeEntity {
         this.profileUrl = profileUrl;
         this.provider = provider;
         this.role = role;
+        this.pillPointContainer = new PillPointContainer(this);
     }
 
 
