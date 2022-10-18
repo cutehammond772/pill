@@ -5,8 +5,8 @@ import me.cutehammond.pill.domain.point.application.PillPointService;
 import me.cutehammond.pill.domain.point.domain.PillPointOrder;
 import me.cutehammond.pill.domain.point.domain.dto.request.PillPointSpecRequest;
 import me.cutehammond.pill.domain.point.domain.dto.response.PillPointResponse;
-import me.cutehammond.pill.domain.point.exception.PillPointAccumulationFailedException;
-import me.cutehammond.pill.domain.point.exception.PillPointUsingFailedException;
+import me.cutehammond.pill.domain.point.exception.PillPointOutOfBoundsException;
+import me.cutehammond.pill.domain.point.exception.particular.PillPointUsingFailedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,14 +22,12 @@ public class PillPointController {
     private final PillPointService pillPointService;
 
     /* for admin */
-
     @PostMapping(value = {"/", "/{userId}"})
     public ResponseEntity<?> addPoint(@PathVariable(name = "userId", required = false) Optional<String> userId, @RequestBody long specId) {
         pillPointService.addPoint(userId, specId);
         return ResponseEntity.ok().build();
     }
 
-    /* validation 위치에 대해 더 고민할 필요가 있다. */
     @PostMapping("/spec")
     public ResponseEntity<?> addPointSpec(@RequestBody PillPointSpecRequest pillPointSpecRequest) {
         pillPointService.addPointSpec(pillPointSpecRequest);
@@ -40,8 +38,9 @@ public class PillPointController {
 
     @PatchMapping(value = {"/", "/{userId}"})
     public ResponseEntity<?> usePoints(@PathVariable(name = "userId", required = false) Optional<String> userId, @RequestBody int point) {
+        /* point validation */
         if (point <= 0)
-            throw new PillPointUsingFailedException();
+            throw new PillPointOutOfBoundsException("사용할 포인트가 0 이하입니다.");
 
         pillPointService.usePoints(userId, point);
         return ResponseEntity.ok().build();
@@ -56,15 +55,12 @@ public class PillPointController {
 
     @GetMapping(value = {"/list", "/list/{userId}"})
     public ResponseEntity<?> getPoints(@PathVariable(name = "userId", required = false) Optional<String> userId,
-                                       @RequestParam(name = "includeRunOut", required = false, defaultValue = "false") String includeRunOut,
-                                       @RequestParam(name = "includeExpired", required = false, defaultValue = "false") String includeExpired) {
-        if (!(includeRunOut.equalsIgnoreCase("true") || includeRunOut.equalsIgnoreCase("false")) ||
-                !(includeExpired.equalsIgnoreCase("true") || includeExpired.equalsIgnoreCase("false")))
-            throw new PillPointAccumulationFailedException();
+                                       @RequestParam(name = "includeRunOut", required = false) boolean includeRunOut,
+                                       @RequestParam(name = "includeExpired", required = false) boolean includeExpired) {
 
         /* PillPointOrder 설정은 나중에 한다. */
-        var points = pillPointService.getPoints(userId,
-                Boolean.parseBoolean(includeRunOut), Boolean.parseBoolean(includeExpired), PillPointOrder.CLOSE_TO_RECEIVED);
+        var points = pillPointService
+                .getPoints(userId, includeRunOut, includeExpired, PillPointOrder.CLOSE_TO_RECEIVED);
 
         var map = points.stream()
                 .collect(Collectors.toMap(PillPointResponse::getName, Function.identity()));

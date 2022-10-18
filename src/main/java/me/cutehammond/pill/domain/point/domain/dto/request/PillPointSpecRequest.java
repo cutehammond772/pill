@@ -1,21 +1,24 @@
 package me.cutehammond.pill.domain.point.domain.dto.request;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
+import lombok.*;
 
+import javax.validation.constraints.Future;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
+@RequiredArgsConstructor
 public final class PillPointSpecRequest {
 
+    @NonNull
     private final int point;
 
     @NonNull
     private final String name;
 
-    @NonNull
+    /* if null, there is no expiry. */
     private final LocalDateTime expirationDate;
 
 }

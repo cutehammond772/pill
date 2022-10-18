@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 
 public class PillPointException extends PillException {
 
-    public PillPointException(String message, @NonNull ErrorCode errorCode, @NonNull HttpStatus httpStatus) {
+    public PillPointException(@NonNull String message, @NonNull ErrorCode errorCode, @NonNull HttpStatus httpStatus) {
         super(message, errorCode, httpStatus);
     }
 

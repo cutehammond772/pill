@@ -2,8 +2,10 @@ package me.cutehammond.pill.domain.point.domain;
 
 import lombok.*;
 import me.cutehammond.pill.domain.point.exception.PillPointAccumulationFailedException;
-import me.cutehammond.pill.domain.point.exception.PillPointExpiredException;
-import me.cutehammond.pill.domain.point.exception.PillPointUsingFailedException;
+import me.cutehammond.pill.domain.point.exception.PillPointOutOfBoundsException;
+import me.cutehammond.pill.domain.point.exception.particular.PillPointExpiredException;
+import me.cutehammond.pill.domain.point.exception.PillPointOrderDuplicatedException;
+import me.cutehammond.pill.domain.point.exception.particular.PillPointUsingFailedException;
 import me.cutehammond.pill.domain.user.domain.User;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +24,10 @@ public class PillPointContainer {
     private long id;
 
     @Getter
-    @OneToOne(mappedBy = "pillPointContainer")
+    @OneToOne(mappedBy = "pillPointContainer", fetch = FetchType.LAZY)
     private User user;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "pillPointContainer", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<PillPoint> points = new ArrayList<>();
 
     public PillPointContainer(@NonNull User user) {
@@ -36,11 +38,11 @@ public class PillPointContainer {
      * 포인트 명세에 따라 발행 후 적립합니다.
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public PillPoint addPoint(PillPointSpec spec) {
+    public PillPoint addPoint(@NonNull PillPointSpec spec) {
         if (spec.isExpired())
-            throw new PillPointExpiredException();
+            throw new PillPointExpiredException(spec.getName());
 
-        PillPoint pillPoint = new PillPoint(spec);
+        PillPoint pillPoint = new PillPoint(spec, this);
 
         points.add(pillPoint);
         return pillPoint;
@@ -71,9 +73,8 @@ public class PillPointContainer {
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public List<PillPoint> getPoints(boolean includeRunOut, boolean includeExpired, @NonNull PillPointOrder... orders) {
-        /* 같은 시그니처를 동시에 대입했을 경우 */
-        if (validateDuplicatedSignature(List.of(orders)))
-            throw new PillPointUsingFailedException();
+        /* 유효성 검증: 같은 기준을 동시에 대입하면 예외 발생 */
+        validateOrders(orders);
 
         /* 맨 뒤에 있는 정렬 기준부터 정렬해야 한다. */
         var reversedOrders = Arrays.asList(orders);
@@ -97,16 +98,16 @@ public class PillPointContainer {
      * 포인트 만료 날짜가 가까운 것이 1순위, 얼마 안남은 포인트가 2순위로 순서가 결정됩니다.
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public void usePoints(int point, PillPointOrder... orders) {
+    public void usePoints(int point, @NonNull PillPointOrder... orders) {
         /* 사용하는 포인트가 0 이하일 때 */
         if (point <= 0)
-            throw new PillPointUsingFailedException();
+            throw new PillPointOutOfBoundsException("사용할 포인트가 0 이하입니다.");
 
         int pointsLeft = getPointsLeft();
 
         /* 사용 가능한 남은 포인트보다 사용하는 포인트가 더 클 때 */
         if (pointsLeft < point)
-            throw new PillPointUsingFailedException();
+            throw new PillPointOutOfBoundsException("사용 가능한 남은 포인트보다 사용하는 포인트가 더 큽니다.");
 
         /* 사용 가능한 포인트 리스트 */
         List<PillPoint> pointsList = getPoints(false, false, orders);
@@ -123,13 +124,21 @@ public class PillPointContainer {
         }
     }
 
-    private boolean validateDuplicatedSignature(Collection<PillPointOrder> orders) {
-        return Arrays
-                .stream(PillPointOrder.PointAttr.values())
-                .map(signature -> orders.stream()
-                        .filter(order -> order.getSignature() == signature)
-                        .count())
-                .anyMatch(count -> count > 1);
+    private void validateOrders(@NonNull PillPointOrder... orders) {
+        try {
+            var groups = Arrays.stream(orders)
+                    .collect(Collectors.groupingBy(PillPointOrder::getAttr));
+
+            var duplicates = groups.keySet().stream()
+                    .filter(attr -> groups.get(attr).size() > 1).toList();
+
+            if (duplicates.size() > 0)
+                throw new PillPointOrderDuplicatedException(
+                        duplicates.stream().map(groups::get).flatMap(List::stream).toList()
+                );
+        } catch (NullPointerException e) {
+          throw new PillPointAccumulationFailedException("정렬 순서 중 null 값이 존재합니다.");
+        }
     }
 
 }

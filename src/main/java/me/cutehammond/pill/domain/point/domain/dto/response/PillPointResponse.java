@@ -1,14 +1,15 @@
 package me.cutehammond.pill.domain.point.domain.dto.response;
 
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.domain.point.domain.PillPoint;
 
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PillPointResponse {
 
     private final int receivedPoint;

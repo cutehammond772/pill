@@ -1,8 +1,9 @@
 package me.cutehammond.pill.domain.point.domain;
 
 import lombok.*;
-import me.cutehammond.pill.domain.point.exception.PillPointAddingFailedException;
-import me.cutehammond.pill.domain.point.exception.PillPointUsingFailedException;
+import me.cutehammond.pill.domain.point.exception.PillPointOutOfBoundsException;
+import me.cutehammond.pill.domain.point.exception.particular.PillPointAddingFailedException;
+import me.cutehammond.pill.domain.point.exception.particular.PillPointUsingFailedException;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -29,8 +30,8 @@ public class PillPoint {
     private long id;
 
     @Getter
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "spec")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "spec", nullable = false)
     private PillPointSpec spec;
 
     @Getter
@@ -42,11 +43,18 @@ public class PillPoint {
     @PositiveOrZero
     private int pointLeft;
 
-    public PillPoint(@NonNull PillPointSpec spec) {
+    @Getter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pillPointContainer", nullable = false)
+    private PillPointContainer pillPointContainer;
+
+    @Builder
+    public PillPoint(@NonNull PillPointSpec spec, @NonNull PillPointContainer pillPointContainer) {
         if (spec.isExpired())
-            throw new PillPointAddingFailedException();
+            throw new PillPointAddingFailedException(spec.getName());
 
         this.spec = spec;
+        this.pillPointContainer = pillPointContainer;
         this.pointLeft = spec.getPoint();
     }
 
@@ -64,8 +72,9 @@ public class PillPoint {
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void usePoint(int point) {
+        /* point validation */
         if (this.pointLeft > point || point <= 0)
-            throw new PillPointUsingFailedException();
+            throw new PillPointOutOfBoundsException("특정 포인트에서 사용할 포인트의 범위가 정상 범위를 벗어났습니다.");
 
         this.pointLeft -= point;
     }
