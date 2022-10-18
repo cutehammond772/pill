@@ -24,7 +24,6 @@ public class Pill extends BaseTimeEntity {
     /**
      * pill의 작성자를 나타냅니다.
      */
-    /* 사용자가 삭제되었을 때 대처가 필요하다. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user")
     private User user;

@@ -23,7 +23,7 @@ public class PillIndex {
     @Column(nullable = false, length = 256)
     private String indexName;
 
-    @OneToMany(mappedBy = "index")
+    @OneToMany(mappedBy = "index", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<PillContent> contents = new ArrayList<>();
 
     @Builder

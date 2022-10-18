@@ -61,10 +61,10 @@ public class AuthTokenProvider {
 
         // userId 의 유효 여부는 JwtAuthenticationProvider 에서 이미 검증하였으므로 여기서는 검증 로직이 불필요하다.
         String userId = refreshToken.getClaims().getAudience();
-        long refreshTokenExpiry = properties.getAuth().getRefreshTokenExpiry();
+        long tokenExpiry = properties.getAuth().getTokenExpiry();
         Date now = new Date();
 
-        AuthToken accessToken = createAccessToken(userId, new Date(now.getTime() + refreshTokenExpiry));
+        AuthToken accessToken = createAccessToken(userId, new Date(now.getTime() + tokenExpiry));
         return accessToken;
     }
 

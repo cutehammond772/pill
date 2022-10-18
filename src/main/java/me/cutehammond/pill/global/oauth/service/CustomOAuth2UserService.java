@@ -1,9 +1,10 @@
 package me.cutehammond.pill.global.oauth.service;
 
 import lombok.RequiredArgsConstructor;
-import me.cutehammond.pill.domain.user.domain.User;
-import me.cutehammond.pill.domain.user.domain.dao.sql.UserRepository;
-import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
+import me.cutehammond.pill.domain.user.application.UserService;
+import me.cutehammond.pill.domain.user.domain.dto.request.UserRegisterRequest;
+import me.cutehammond.pill.domain.user.domain.dto.response.UserResponse;
+import me.cutehammond.pill.domain.user.domain.dto.request.UserUpdateRequest;
 import me.cutehammond.pill.global.oauth.entity.Provider;
 import me.cutehammond.pill.global.oauth.entity.Role;
 import me.cutehammond.pill.global.oauth.entity.OAuth2UserImpl;
@@ -16,6 +17,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -25,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     /**
      *
@@ -35,55 +37,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException, InternalAuthenticationServiceException {
-        OAuth2User user = super.loadUser(userRequest);
-
         try {
-            return this.process(userRequest, user);
+            OAuth2User defaultUser = super.loadUser(userRequest);
+
+            /* ClientRegistration은 등록된 OAuth2 Provider들을 담고 있다. registrationId는 그 Provider 의 lowercase name이다.  */
+            Provider provider = Provider.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase());
+
+            /* provider 를 토대로 attributes 를 UserInfo 로 변환한다.  */
+            OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(provider, defaultUser.getAttributes());
+
+            var userResponse = userService.getUser(userInfo.getId());
+            return OAuth2UserImpl.from(userResponse.isEmpty() ?
+                    register(userInfo, provider) : update(userInfo, provider, userResponse.get()), userInfo);
         } catch (Exception e) {
             throw new InternalAuthenticationServiceException(e.getMessage(), e.getCause());
         }
     }
 
-    /**
-     * 사용자 등록과 함께 OAuth2User를 가공하는 과정을 거칩니다.
-     */
-    private OAuth2User process(OAuth2UserRequest userRequest, OAuth2User user) {
-        /*
-            ClientRegistration 은 등록된 OAuth2 Provider 들을 담고 있다.
-            registrationId는 그 Provider 의 lowercase 이름이다.
-         */
-        Provider provider = Provider.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase());
-
-        /*
-            provider 를 토대로 attributes 를 UserInfo 로 변환한다.
-         */
-        OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(provider, user.getAttributes());
-
-        // UserRepository 에서 User 가져오기
-        var userOptional = userRepository.findByUserId(userInfo.getId());
-
-        if (userOptional.isPresent()) {
-            User savedUser = userOptional.get();
-            // userId 가 같지만 Provider 가 다를 경우 예외 처리 (한 userId 당 Provider 는 하나만 연동 가능하도록 한다. / 임시)
-            if (provider != savedUser.getProvider()) {
-                throw new AuthenticationProviderMissMatchException("Account Provider mismatched. [Registered: " + savedUser.getProvider().name() + "] != [Accessed: " + provider.name() + "]");
-            }
-
-            // Provider 가 제공하는 계정의 정보가 바뀌면 User 의 정보도 바뀌도록 한다.
-            savedUser = updateUser(savedUser, userInfo);
-            return OAuth2UserImpl.from(UserResponse.getResponse(savedUser), userInfo);
-        } else {
-            // user 를 새로 등록한다.
-            User registeredUser = registerUser(userInfo, provider);
-            return OAuth2UserImpl.from(UserResponse.getResponse(registeredUser), userInfo);
-        }
-    }
-
-    /**
-     * 사용자를 새로 등록합니다.
-     */
-    private User registerUser(OAuth2UserInfo userInfo, Provider provider) {
-        User user = User.builder()
+    @Transactional(propagation = Propagation.MANDATORY)
+    UserResponse register(OAuth2UserInfo userInfo, Provider provider) {
+        /* User를 새로 등록하는 경우 */
+        UserRegisterRequest userRegisterRequest = UserRegisterRequest.builder()
                 .userId(userInfo.getId())
                 .userName(userInfo.getName())
                 .email(userInfo.getEmail())
@@ -92,21 +66,31 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .role(Role.DEFAULT_USER)
                 .build();
 
-        return userRepository.save(user);
+        return userService.registerUser(userRegisterRequest);
     }
 
-    /**
-     * 기존에 존재하는 사용자의 정보를 업데이트합니다.
-     */
-    private User updateUser(User user, OAuth2UserInfo userInfo) {
-        if (userInfo.getName() != null && !user.getUserName().equals(userInfo.getName())) {
-            user.setUserName(userInfo.getName());
+    @Transactional(propagation = Propagation.MANDATORY)
+    UserResponse update(OAuth2UserInfo userInfo, Provider provider, UserResponse userResponse) {
+        /* 등록된 User가 존재하는 경우 */
+        /* provider가 등록된 User와 다를 경우 예외 발생; 사용자는 하나의 provider만 연동 가능 */
+        if (provider != userResponse.getProvider()) {
+            throw new AuthenticationProviderMissMatchException
+                    ("Account Provider mismatched. [Registered: " + userResponse.getProvider().name() + "] != [Accessed: " + provider.name() + "]");
         }
 
-        if (userInfo.getImageUrl() != null && !user.getProfileUrl().equals(userInfo.getImageUrl())) {
-            user.setProfileUrl(userInfo.getImageUrl());
+        var userUpdateRequest = UserUpdateRequest.builder()
+                .userId(userResponse.getUserId());
+
+        if (userInfo.getName() != null && !userResponse.getUserName().equals(userInfo.getName())) {
+            userUpdateRequest.userName(userInfo.getName());
         }
 
-        return userRepository.save(user);
+        if (userInfo.getImageUrl() != null && !userResponse.getProfileUrl().equals(userInfo.getImageUrl())) {
+            userUpdateRequest.profileUrl(userInfo.getImageUrl());
+        }
+
+        /* Role Update(관리자 <-> 일반 사용자 변경)는 별도 로직에서 처리한다. */
+        return userService.updateUser(userUpdateRequest.build());
     }
+
 }

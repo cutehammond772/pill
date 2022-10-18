@@ -1,8 +1,7 @@
 package me.cutehammond.pill.global.oauth.entity;
 
 import lombok.*;
-import me.cutehammond.pill.domain.user.domain.User;
-import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
+import me.cutehammond.pill.domain.user.domain.dto.response.UserResponse;
 import me.cutehammond.pill.global.oauth.info.OAuth2UserInfo;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -35,15 +34,15 @@ public final class OAuth2UserImpl implements OAuth2User {
     }
 
     public static OAuth2UserImpl from(@NonNull UserResponse userResponse) {
-        return new OAuth2UserImpl(userResponse.getUserId(), userResponse.getProvider(), Role.DEFAULT_USER,
-                List.of(new SimpleGrantedAuthority(Role.DEFAULT_USER.getKey())));
+        return new OAuth2UserImpl(userResponse.getUserId(), userResponse.getProvider(), userResponse.getRole(),
+                List.of(new SimpleGrantedAuthority(userResponse.getRole().getKey())));
     }
 
     public static OAuth2UserImpl from(@NonNull UserResponse userResponse, @NonNull OAuth2UserInfo info) {
-        OAuth2UserImpl OAuth2UserImpl = from(userResponse);
-        OAuth2UserImpl.setAttributes(info.getAttributes());
+        OAuth2UserImpl oAuth2UserImpl = from(userResponse);
+        oAuth2UserImpl.setAttributes(info.getAttributes());
 
-        return OAuth2UserImpl;
+        return oAuth2UserImpl;
     }
 
 }

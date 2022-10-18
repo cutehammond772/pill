@@ -1,6 +1,5 @@
 package me.cutehammond.pill;
 
-import me.cutehammond.pill.domain.pill.domain.dao.nosql.PillElementRepository;
 import me.cutehammond.pill.domain.pill.domain.dao.sql.PillRepository;
 import me.cutehammond.pill.domain.point.domain.dao.sql.PillPointRepository;
 import me.cutehammond.pill.global.config.properties.AppProperties;
@@ -22,7 +21,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 		PillPointRepository.class
 })
 @EnableMongoAuditing @EnableMongoRepositories(basePackageClasses = {
-		PillElementRepository.class
 })
 public class PillApplication {
 

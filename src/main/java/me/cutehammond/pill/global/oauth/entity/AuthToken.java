@@ -8,13 +8,14 @@ import me.cutehammond.pill.global.oauth.exception.token.PillInvalidAuthTokenExce
 
 import java.security.Key;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * 인증 토큰 정보를 담은 객체입니다. 생성자 호출 시에 Validation 이 진행됩니다.
  * */
 @Slf4j
 @Getter
-public class AuthToken {
+public final class AuthToken {
 
     /*
     Registered Claims:  iss(= Token issuer; Pill),
@@ -28,7 +29,7 @@ public class AuthToken {
         ACCESS_TOKEN, REFRESH_TOKEN,
 
         /** parsing 과정에서 예외가 발생할 때 사용한다. 왜냐하면 AuthTokenType은 Token 내에 존재하기 때문이다. */
-        UNKNOWN;
+        UNKNOWN
     }
 
     public static final String AUTH_TOKEN_ISSUER = "Pill";
@@ -91,4 +92,17 @@ public class AuthToken {
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!obj.getClass().equals(AuthToken.class))
+            return false;
+
+        AuthToken authToken = (AuthToken) obj;
+        return this.key.equals(authToken.key) && this.token.equals(authToken.token);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.token, this.key);
+    }
 }

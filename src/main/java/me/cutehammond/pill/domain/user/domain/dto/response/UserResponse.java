@@ -1,4 +1,4 @@
-package me.cutehammond.pill.domain.user.domain.dto;
+package me.cutehammond.pill.domain.user.domain.dto.response;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,7 +30,7 @@ public final class UserResponse {
     @NonNull
     private final Role role;
 
-    public static UserResponse getResponse(@NonNull User user) {
+    public static UserResponse from(@NonNull User user) {
         return new UserResponse(user.getUserId(), user.getUserName(), user.getEmail(),
                 user.getProfileUrl(), user.getProvider(), user.getRole());
     }

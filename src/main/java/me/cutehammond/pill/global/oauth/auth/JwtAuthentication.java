@@ -2,10 +2,9 @@ package me.cutehammond.pill.global.oauth.auth;
 
 import lombok.Getter;
 import lombok.NonNull;
-import me.cutehammond.pill.domain.user.domain.dto.UserResponse;
+import me.cutehammond.pill.domain.user.domain.dto.response.UserResponse;
 import me.cutehammond.pill.global.oauth.entity.AuthToken;
 import me.cutehammond.pill.global.oauth.exception.authentication.AuthenticationInvalidTokenException;
-import me.cutehammond.pill.global.oauth.exception.token.PillInvalidAuthTokenException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

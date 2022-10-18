@@ -1,4 +1,4 @@
-package me.cutehammond.pill.domain.pill.domain.dto;
+package me.cutehammond.pill.domain.pill.domain.dto.request;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -10,8 +10,11 @@ import lombok.RequiredArgsConstructor;
 public final class PillUpdateRequest {
 
     @NonNull
+    private final Long id;
+
+    @NonNull
     private final String title;
 
-    private final long id;
+    /* 이후 추가 예정 */
 
 }
