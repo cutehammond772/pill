@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class ParticularPillPointException extends PillPointException {
 
-    @NonNull
     private final String pointName;
 
     public ParticularPillPointException(String message, @NonNull ErrorCode errorCode, @NonNull HttpStatus httpStatus, @NonNull String pointName) {

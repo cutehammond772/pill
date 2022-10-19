@@ -4,7 +4,7 @@ import io.jsonwebtoken.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import me.cutehammond.pill.global.oauth.exception.token.PillInvalidAuthTokenException;
+import me.cutehammond.pill.global.oauth.exception.token.InvalidAuthTokenException;
 
 import java.security.Key;
 import java.util.Date;
@@ -43,13 +43,13 @@ public final class AuthToken {
     @NonNull
     private final Claims claims;
 
-    public AuthToken(@NonNull String token, @NonNull Key key) throws PillInvalidAuthTokenException {
+    public AuthToken(@NonNull String token, @NonNull Key key) throws InvalidAuthTokenException {
         this.key = key;
         this.token = token;
         this.claims = extract();
     }
 
-    public AuthToken(@NonNull String userId, @NonNull Date expiry, @NonNull Key key, @NonNull AuthTokenType type) throws PillInvalidAuthTokenException {
+    public AuthToken(@NonNull String userId, @NonNull Date expiry, @NonNull Key key, @NonNull AuthTokenType type) throws InvalidAuthTokenException {
         this.key = key;
         this.token = create(userId, expiry, type);
         this.claims = extract();
@@ -73,7 +73,7 @@ public final class AuthToken {
                 .compact();
     }
 
-    private Claims extract() throws PillInvalidAuthTokenException {
+    private Claims extract() throws InvalidAuthTokenException {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(key)
@@ -82,13 +82,13 @@ public final class AuthToken {
                     .getBody();
         } catch (SecurityException | MalformedJwtException | IllegalArgumentException e) {
             log.info("Invalid JWT signature.");
-            throw new PillInvalidAuthTokenException("Failed to extract AuthToken; invalid JWT signature.", AuthTokenType.UNKNOWN);
+            throw new InvalidAuthTokenException("Failed to extract AuthToken; invalid JWT signature.", AuthTokenType.UNKNOWN);
         } catch (ExpiredJwtException e) {
             log.info("Expired JWT token.");
-            throw new PillInvalidAuthTokenException("Failed to extract AuthToken; expired JWT token.", AuthTokenType.UNKNOWN);
+            throw new InvalidAuthTokenException("Failed to extract AuthToken; expired JWT token.", AuthTokenType.UNKNOWN);
         } catch (UnsupportedJwtException e) {
             log.info("Unsupported JWT token.");
-            throw new PillInvalidAuthTokenException("Failed to extract AuthToken; unsupported JWT token.", AuthTokenType.UNKNOWN);
+            throw new InvalidAuthTokenException("Failed to extract AuthToken; unsupported JWT token.", AuthTokenType.UNKNOWN);
         }
     }
 

@@ -5,7 +5,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import me.cutehammond.pill.global.config.properties.AppProperties;
 import me.cutehammond.pill.global.oauth.entity.AuthToken;
-import me.cutehammond.pill.global.oauth.exception.token.PillInvalidAuthTokenException;
+import me.cutehammond.pill.global.oauth.exception.token.InvalidAuthTokenException;
 import me.cutehammond.pill.global.utils.cookie.dto.CookieRequest;
 import me.cutehammond.pill.global.utils.cookie.CookieSecureType;
 import me.cutehammond.pill.global.utils.cookie.CookieUtils;
@@ -34,47 +34,46 @@ public class AuthTokenProvider {
     /**
      * AccessToken 특성의 AuthToken 을 생성합니다.
      * */
-    public AuthToken createAccessToken(@NonNull String userId, @NonNull Date expiry) throws PillInvalidAuthTokenException {
+    public AuthToken createAccessToken(@NonNull String userId, @NonNull Date expiry) throws InvalidAuthTokenException {
         return new AuthToken(userId, expiry, key, AuthToken.AuthTokenType.ACCESS_TOKEN);
     }
 
     /**
      * RefreshToken 특성의 AuthToken 을 생성합니다.
      * */
-    public AuthToken createRefreshToken(@NonNull String userId, @NonNull Date expiry) throws PillInvalidAuthTokenException {
+    public AuthToken createRefreshToken(@NonNull String userId, @NonNull Date expiry) throws InvalidAuthTokenException {
         return new AuthToken(userId, expiry, key, AuthToken.AuthTokenType.REFRESH_TOKEN);
     }
 
     /**
      * Token 문자열을 AuthToken 으로 변환합니다.
      * */
-    public AuthToken convertAuthToken(@NonNull String token) throws PillInvalidAuthTokenException {
+    public AuthToken convertAuthToken(@NonNull String token) throws InvalidAuthTokenException {
         return new AuthToken(token, key);
     }
 
     /** 사용자가 가지고 있는 RefreshToken 을 이용하여 새로운 AccessToken 을 발급합니다. <br>
-     * @throws PillInvalidAuthTokenException */
-    public AuthToken issueAccessToken(@NonNull AuthToken refreshToken) throws PillInvalidAuthTokenException {
+     * @throws InvalidAuthTokenException */
+    public AuthToken issueAccessToken(@NonNull AuthToken refreshToken) throws InvalidAuthTokenException {
         // 이 토큰이 RefreshToken 인지 따진다.
         if (!AuthToken.AuthTokenType.REFRESH_TOKEN.name().equals(refreshToken.getClaims().getSubject()))
-            throw new PillInvalidAuthTokenException("Cannot issue AccessToken; received RefreshToken is not RefreshToken.", AuthToken.AuthTokenType.REFRESH_TOKEN);
+            throw new InvalidAuthTokenException("Cannot issue AccessToken; received RefreshToken is not RefreshToken.", AuthToken.AuthTokenType.REFRESH_TOKEN);
 
         // userId 의 유효 여부는 JwtAuthenticationProvider 에서 이미 검증하였으므로 여기서는 검증 로직이 불필요하다.
         String userId = refreshToken.getClaims().getAudience();
         long tokenExpiry = properties.getAuth().getTokenExpiry();
         Date now = new Date();
 
-        AuthToken accessToken = createAccessToken(userId, new Date(now.getTime() + tokenExpiry));
-        return accessToken;
+        return createAccessToken(userId, new Date(now.getTime() + tokenExpiry));
     }
 
     /** auth 과정 이후 로그인을 유지하기 위해 RefreshToken 을 발급한 후 등록합니다.<br>
      * 만약 기존에 RefreshToken 이 존재할 경우 삭제 후 새로 등록합니다.
-     * @throws PillInvalidAuthTokenException */
-    public void updateRefreshToken(HttpServletRequest req, HttpServletResponse res, @NonNull AuthToken accessToken) throws PillInvalidAuthTokenException {
+     * @throws InvalidAuthTokenException */
+    public void updateRefreshToken(HttpServletRequest req, HttpServletResponse res, @NonNull AuthToken accessToken) throws InvalidAuthTokenException {
         // 이 토큰이 RefreshToken 인지 따진다.
         if (!AuthToken.AuthTokenType.ACCESS_TOKEN.name().equals(accessToken.getClaims().getSubject()))
-            throw new PillInvalidAuthTokenException("Cannot update RefreshToken; received AccessToken is not AccessToken.", AuthToken.AuthTokenType.ACCESS_TOKEN);
+            throw new InvalidAuthTokenException("Cannot update RefreshToken; received AccessToken is not AccessToken.", AuthToken.AuthTokenType.ACCESS_TOKEN);
 
         String userId = accessToken.getClaims().getAudience();
         long refreshTokenExpiry = properties.getAuth().getRefreshTokenExpiry();

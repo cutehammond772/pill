@@ -16,9 +16,9 @@ public class PillPointOrderDuplicatedException extends PillPointException {
     private final List<PillPointOrder> duplicate;
 
     public PillPointOrderDuplicatedException(@NonNull Collection<PillPointOrder> duplicate) {
-        super("포인트 정렬 순서에 중복된 기준이 있습니다. [" +
-                duplicate.stream().map(PillPointOrder::name).collect(Collectors.joining(", ")) +
-                "]", ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST);
+        super(String.format("포인트 정렬 순서에 중복된 기준이 있습니다. [%s]",
+                duplicate.stream().map(PillPointOrder::name).collect(Collectors.joining(", "))),
+                ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST);
 
         this.duplicate = duplicate.stream().toList();
     }

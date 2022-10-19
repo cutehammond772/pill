@@ -6,8 +6,8 @@ import me.cutehammond.pill.domain.user.domain.dao.sql.UserRepository;
 import me.cutehammond.pill.domain.user.domain.dto.request.UserRegisterRequest;
 import me.cutehammond.pill.domain.user.domain.dto.response.UserResponse;
 import me.cutehammond.pill.domain.user.domain.dto.request.UserUpdateRequest;
-import me.cutehammond.pill.domain.user.exception.PillUserAlreadyRegisteredException;
-import me.cutehammond.pill.domain.user.exception.PillUserNotFoundException;
+import me.cutehammond.pill.domain.user.exception.UserAlreadyRegisteredException;
+import me.cutehammond.pill.domain.user.exception.UserNotFoundException;
 import me.cutehammond.pill.global.oauth.auth.JwtAuthentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -48,7 +48,7 @@ public class UserService {
     @Transactional
     public UserResponse registerUser(UserRegisterRequest userRegisterRequest) {
         if (userRepository.findByUserId(userRegisterRequest.getUserId()).isPresent())
-            throw new PillUserAlreadyRegisteredException(userRegisterRequest.getUserId());
+            throw new UserAlreadyRegisteredException(userRegisterRequest.getUserId());
 
         User user = new User(userRegisterRequest);
         return UserResponse.from(userRepository.save(user));
@@ -60,7 +60,7 @@ public class UserService {
     @Transactional
     public UserResponse updateUser(UserUpdateRequest userUpdateRequest) {
         User user = userRepository.findByUserId(userUpdateRequest.getUserId())
-                .orElseThrow(() -> new PillUserNotFoundException(userUpdateRequest.getUserId()));
+                .orElseThrow(() -> new UserNotFoundException(userUpdateRequest.getUserId()));
 
         user.update(userUpdateRequest);
         return UserResponse.from(user);

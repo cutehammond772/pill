@@ -12,8 +12,8 @@ import me.cutehammond.pill.domain.point.domain.dto.response.PillPointResponse;
 import me.cutehammond.pill.domain.point.exception.particular.PillPointSpecNotFoundException;
 import me.cutehammond.pill.domain.user.application.UserService;
 import me.cutehammond.pill.domain.user.domain.dao.sql.UserRepository;
-import me.cutehammond.pill.domain.user.exception.PillUserNotFoundException;
-import me.cutehammond.pill.domain.user.exception.PillUserUnauthorizedException;
+import me.cutehammond.pill.domain.user.exception.UserNotFoundException;
+import me.cutehammond.pill.domain.user.exception.UserUnauthorizedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,14 +66,14 @@ public class PillPointService {
     @Transactional(propagation = Propagation.MANDATORY)
     String fetchCurrentUserId() {
         return userService.getCurrentUser()
-                .orElseThrow(PillUserUnauthorizedException::new)
+                .orElseThrow(UserUnauthorizedException::new)
                 .getUserId();
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     PillPointContainer fetchPillPointContainer(String userId) {
         return userRepository.findByUserId(userId)
-                .orElseThrow(() -> new PillUserNotFoundException(userId))
+                .orElseThrow(() -> new UserNotFoundException(userId))
                 .getPillPointContainer();
     }
 

@@ -1,7 +1,6 @@
 package me.cutehammond.pill.domain.point.exception.particular;
 
 import lombok.NonNull;
-import me.cutehammond.pill.domain.point.exception.PillPointException;
 import me.cutehammond.pill.global.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
 
@@ -12,7 +11,7 @@ public final class PillPointAddingFailedException extends ParticularPillPointExc
     }
 
     public PillPointAddingFailedException(@NonNull String pointName) {
-        this("포인트 [" + pointName + "]를 적립하는 데 실패하였습니다.", pointName);
+        this(String.format("포인트[pointName=%s]를 적립하는 데 실패하였습니다.", pointName), pointName);
     }
 
 }

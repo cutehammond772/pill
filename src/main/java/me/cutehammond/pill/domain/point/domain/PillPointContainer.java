@@ -5,7 +5,6 @@ import me.cutehammond.pill.domain.point.exception.PillPointAccumulationFailedExc
 import me.cutehammond.pill.domain.point.exception.PillPointOutOfBoundsException;
 import me.cutehammond.pill.domain.point.exception.particular.PillPointExpiredException;
 import me.cutehammond.pill.domain.point.exception.PillPointOrderDuplicatedException;
-import me.cutehammond.pill.domain.point.exception.particular.PillPointUsingFailedException;
 import me.cutehammond.pill.domain.user.domain.User;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

@@ -2,7 +2,7 @@ package me.cutehammond.pill.global.oauth.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import me.cutehammond.pill.domain.user.exception.PillUserUnauthorizedException;
+import me.cutehammond.pill.domain.user.exception.UserUnauthorizedException;
 import me.cutehammond.pill.global.config.properties.AppProperties;
 import me.cutehammond.pill.global.exception.APIErrorResponse;
 import me.cutehammond.pill.global.exception.ErrorCode;
@@ -12,7 +12,6 @@ import me.cutehammond.pill.global.oauth.info.OAuth2UserInfoFactory;
 import me.cutehammond.pill.global.oauth.repository.OAuth2AuthorizationRequestRepository;
 import me.cutehammond.pill.global.oauth.entity.AuthToken;
 import me.cutehammond.pill.global.oauth.auth.AuthTokenProvider;
-import me.cutehammond.pill.global.utils.PillSerializationUtils;
 import me.cutehammond.pill.global.utils.cookie.dto.CookieResponse;
 import me.cutehammond.pill.global.utils.cookie.CookieUtils;
 import org.springframework.http.HttpStatus;
@@ -100,11 +99,10 @@ public class OAuth2AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHand
 
         // accessToken 을 생성한다.
         Date now = new Date();
-        AuthToken accessToken = tokenProvider.createAccessToken(
+
+        return tokenProvider.createAccessToken(
                 userInfo.getId(), new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
         );
-
-        return accessToken;
     }
 
     private String determineUri(HttpServletRequest request) {
@@ -113,7 +111,7 @@ public class OAuth2AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHand
 
         // 허용된 redirect uri 가 아닌 경우
         if(redirectUri.isPresent() && !isAuthorizedRedirectUri(redirectUri.get())) {
-            throw new PillUserUnauthorizedException("We've got an Unauthorized Redirect URI and can't proceed with the authentication.");
+            throw new UserUnauthorizedException("We've got an Unauthorized Redirect URI and can't proceed with the authentication.");
         }
 
         // cookie 내의 redirect uri 가 존재하지 않으면 등록된 authorizedRedirectUri 중 첫 번째 uri 를 대신 사용한다.

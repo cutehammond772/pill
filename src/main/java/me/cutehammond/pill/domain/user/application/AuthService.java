@@ -3,7 +3,7 @@ package me.cutehammond.pill.domain.user.application;
 import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.global.oauth.auth.AuthTokenProvider;
 import me.cutehammond.pill.global.oauth.entity.AuthToken;
-import me.cutehammond.pill.global.oauth.exception.token.PillInvalidAuthTokenException;
+import me.cutehammond.pill.global.oauth.exception.token.InvalidAuthTokenException;
 import me.cutehammond.pill.global.utils.cookie.CookieUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -24,12 +24,10 @@ public class AuthService {
     @Transactional(propagation = Propagation.SUPPORTS)
     public AuthToken issueAccessToken(HttpServletRequest request, HttpServletResponse response, String refreshTokenStr) {
         try {
-            AuthToken accessToken = authTokenProvider.issueAccessToken(
+            return authTokenProvider.issueAccessToken(
                     authTokenProvider.convertAuthToken(refreshTokenStr)
             );
-
-            return accessToken;
-        } catch (PillInvalidAuthTokenException e) {
+        } catch (InvalidAuthTokenException e) {
             // 유효하지 않은 token은 삭제된다.
             CookieUtils.deleteCookie(request, response, REFRESH_TOKEN);
             throw e;
