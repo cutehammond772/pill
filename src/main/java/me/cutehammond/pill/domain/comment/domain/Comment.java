@@ -30,12 +30,13 @@ public class Comment {
     @Column(nullable = false, length = 256)
     private String comment;
 
-    @OneToMany(mappedBy = "comment")
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<CommentLike> likedUsers = new ArrayList<>();
 
     @Builder
-    public Comment(@NonNull Pill pill, @NonNull String comment) {
+    public Comment(@NonNull Pill pill, @NonNull User user, @NonNull String comment) {
         this.pill = pill;
+        this.user = user;
         this.comment = comment;
     }
 

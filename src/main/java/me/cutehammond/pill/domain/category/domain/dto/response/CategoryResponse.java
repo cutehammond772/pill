@@ -1,4 +1,4 @@
-package me.cutehammond.pill.domain.category.domain.dto;
+package me.cutehammond.pill.domain.category.domain.dto.response;
 
 import lombok.AccessLevel;
 import lombok.Getter;

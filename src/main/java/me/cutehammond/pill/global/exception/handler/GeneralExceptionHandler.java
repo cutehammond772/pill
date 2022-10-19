@@ -1,7 +1,11 @@
 package me.cutehammond.pill.global.exception.handler;
 
 import me.cutehammond.pill.domain.category.exception.CategoryException;
-import me.cutehammond.pill.domain.category.exception.CategoryPageOutOfIndexException;
+import me.cutehammond.pill.domain.category.exception.CategoryInvalidPageRequestException;
+import me.cutehammond.pill.domain.category.exception.InvalidCategoryException;
+import me.cutehammond.pill.domain.comment.exception.CommentInvalidPageRequestException;
+import me.cutehammond.pill.domain.comment.exception.CommentNotFoundException;
+import me.cutehammond.pill.domain.comment.exception.InvalidCommentException;
 import me.cutehammond.pill.domain.point.domain.PillPointOrder;
 import me.cutehammond.pill.domain.point.exception.PillPointOrderDuplicatedException;
 import me.cutehammond.pill.domain.point.exception.particular.ParticularPillPointException;
@@ -21,8 +25,36 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GeneralExceptionHandler {
 
-    @ExceptionHandler(CategoryPageOutOfIndexException.class)
-    public ResponseEntity<APIErrorResponse> handleCategoryPageOutOfIndexException(CategoryPageOutOfIndexException e) {
+    @ExceptionHandler(InvalidCommentException.class)
+    public ResponseEntity<APIErrorResponse> handleInvalidCommentException(InvalidCommentException e) {
+        Map<String, String> values = new HashMap<>();
+
+        if (e.getCommentId() != -1L)
+            values.put("commentId", Long.toString(e.getCommentId()));
+
+        if (e.getComment() != null)
+            values.put("comment", e.getComment());
+
+        return build(common(e).extra(values));
+    }
+
+    @ExceptionHandler(CommentNotFoundException.class)
+    public ResponseEntity<APIErrorResponse> handleCommentNotFoundException(CommentNotFoundException e) {
+        return build(common(e).extra(Map.of("commentId", Long.toString(e.getCommentId()))));
+    }
+
+    @ExceptionHandler(CommentInvalidPageRequestException.class)
+    public ResponseEntity<APIErrorResponse> handleCommentInvalidPageRequestException(CommentInvalidPageRequestException e) {
+        Map<String, String> values = new HashMap<>();
+
+        values.put("page", Integer.toString(e.getPage()));
+        values.put("size", Integer.toString(e.getSize()));
+
+        return build(common(e).extra(values));
+    }
+
+    @ExceptionHandler(CategoryInvalidPageRequestException.class)
+    public ResponseEntity<APIErrorResponse> handleCategoryPageOutOfIndexException(CategoryInvalidPageRequestException e) {
         Map<String, String> values = new HashMap<>();
 
         if (e.getCategoryId() != -1L)

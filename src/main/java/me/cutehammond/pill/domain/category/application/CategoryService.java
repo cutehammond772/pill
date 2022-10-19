@@ -5,7 +5,7 @@ import me.cutehammond.pill.domain.category.domain.Category;
 import me.cutehammond.pill.domain.category.domain.PillCategoryMapping;
 import me.cutehammond.pill.domain.category.domain.dao.CategoryRepository;
 import me.cutehammond.pill.domain.category.domain.dao.PillCategoryMappingRepository;
-import me.cutehammond.pill.domain.category.domain.dto.CategoryResponse;
+import me.cutehammond.pill.domain.category.domain.dto.response.CategoryResponse;
 import me.cutehammond.pill.domain.category.exception.CategoryNotFoundException;
 import me.cutehammond.pill.domain.pill.domain.Pill;
 import me.cutehammond.pill.domain.pill.domain.dao.sql.PillRepository;

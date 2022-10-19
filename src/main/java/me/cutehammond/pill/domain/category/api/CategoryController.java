@@ -2,8 +2,8 @@ package me.cutehammond.pill.domain.category.api;
 
 import lombok.RequiredArgsConstructor;
 import me.cutehammond.pill.domain.category.application.CategoryService;
-import me.cutehammond.pill.domain.category.domain.dto.CategoryResponse;
-import me.cutehammond.pill.domain.category.exception.CategoryPageOutOfIndexException;
+import me.cutehammond.pill.domain.category.domain.dto.response.CategoryResponse;
+import me.cutehammond.pill.domain.category.exception.CategoryInvalidPageRequestException;
 import me.cutehammond.pill.domain.category.exception.InvalidCategoryException;
 import me.cutehammond.pill.domain.pill.domain.dto.response.PillResponse;
 import me.cutehammond.pill.domain.pill.exception.InvalidPillException;
@@ -39,7 +39,7 @@ public class CategoryController {
                                                        @RequestParam(name = "page") Integer page,
                                                        @RequestParam(name = "size") Integer size) {
         if (!(page >= 0 && size > 0))
-            throw new CategoryPageOutOfIndexException(categoryId, page, size);
+            throw new CategoryInvalidPageRequestException(categoryId, page, size);
 
         return ResponseEntity.ok(
                 categoryService.getPills(categoryId, PageRequest.of(page, size))
