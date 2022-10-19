@@ -4,4 +4,5 @@
 > ### 개발 기간
 > **2022.8~**
 
-# 요구 사항
+# 기술 스택
+Java, Spring Boot, Hibernate, MariaDB, MongoDB, Querydsl, Spring Boot OAuth2, JWT, Mockito, Spring Security
